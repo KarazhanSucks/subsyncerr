@@ -1,2 +1,2 @@
 # subaligner-bazarr
-subaligner + subsync + subcleaner + hi-subtitle-removal
+subaligner + subsync + subcleaner + <i>hi-subtitle-removal</i>
