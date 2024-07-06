@@ -1,2 +1,4 @@
 # subaligner-bazarr
-subaligner + subsync + subcleaner + <i>hi-subtitle-removal</i>
+subaligner + subsync + subcleaner
+
+API_KEY, BAZARR_URL, SUBCLEANER, CRON_SCHEDULE
