@@ -3,9 +3,6 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Europe/London
 
-# ENV'S
-# API_KEY, BAZARR_URL, CRON, SUBCLEANER
-
 # Update package list and install dependencies
 RUN apt-get -y update && \
     apt-get -y install \
@@ -15,7 +12,7 @@ RUN apt-get -y update && \
         python3-pip\
         git \
         locales \
-        cron\
+        cron \
         # subaligner
         espeak \
         libespeak1 \
@@ -37,8 +34,8 @@ RUN apt-get -y update && \
         libavutil-dev && \
     apt-get -y clean
 
-RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install --upgrade setuptools wheel
+RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+    python3 -m pip install --no-cache-dir --upgrade setuptools wheel
 
 RUN locale-gen "en_US.UTF-8"
 ENV LANG=en_US.UTF-8 \
@@ -47,24 +44,27 @@ ENV LANG=en_US.UTF-8 \
 
 WORKDIR /opt/subaligner
 RUN git clone https://github.com/baxtree/subaligner.git . && \
-    pip install -r requirements.txt && pip install -r requirements-stretch.txt && \
-    python3 -m pip install . && \
-    python3 -m pip install "subaligner[harmony]"
+    pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir -r requirements-stretch.txt && \
+    python3 -m pip install --no-cache-dir . && \
+    python3 -m pip install --no-cache-dir "subaligner[harmony]"
 
 WORKDIR /opt/subsync
 RUN git clone https://github.com/sc0ty/subsync.git . && \
     cp subsync/config.py.template subsync/config.py && \
     # mkdir /config && chmod 777 /config && \
-    pip install -r requirements.txt && \
-    pip install .
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir .
 
 WORKDIR /opt/subcleaner
 RUN git clone https://github.com/KBlixt/subcleaner.git . && \
     python3 ./subcleaner.py -h
+
+WORKDIR /opt/scripts
+RUN git clone https://github.com/Tarzoq/subaligner-bazarr.git
 
 # Clean up unnecessary files to reduce image size
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Optionally, set the working directory
 WORKDIR /working
-CMD [ "cron", "-f" ]
+CMD ["/opt/scripts/start.sh"]
