@@ -208,7 +208,7 @@ def remove_from_list(csv_file, sub_file):
         
     time.sleep(0.5)
     
-def process_subtitles(csv_file, error_file):
+def process_subtitles(csv_file, error_file, timestamp):
     processed_count = 0 
     
     while True:
@@ -277,7 +277,7 @@ def process_subtitles(csv_file, error_file):
                 subtitles = list(reader)
                     
             if not subtitles:
-                print("List is clear!!!")
+                print(f"{timestamp}: List is clear!!!")
                 break
             else:
                 process_subtitles(csv_file, error_file)
