@@ -5,7 +5,7 @@ ENV TZ=Europe/London
 
 # Update package list and install dependencies
 RUN apt-get -y update && \
-    apt-get -y install cron locales git
+    apt-get -y install cron locales git python3-dev
 #         # requirements
 #         ffmpeg \
 #         python3-dev \
