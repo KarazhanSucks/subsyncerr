@@ -39,3 +39,4 @@ cron
 while true; do
     echo "$(date): Container is running!"
     sleep 7200
+done
