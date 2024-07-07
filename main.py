@@ -10,7 +10,7 @@ import fcntl
 from datetime import datetime
 
 API_KEY = os.getenv("API_KEY", "a2fe6181cefc9e93214a6b84ce8ec736")
-BAZARR_URL = os.getenv("BAZARR_URL", "http://vpn:6767")
+BAZARR_URL = os.getenv("BAZARR_URL", "http://localhost:6767")
 SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
 
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
