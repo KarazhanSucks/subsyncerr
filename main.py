@@ -111,7 +111,7 @@ def add_to_error_list(error_file, reference_file, sub_file, sub_code2, sub_code3
             
         time.sleep(0.1)
     except Exception as e:
-        print("Something went wrong...")
+        print("ERROR: Something went wrong...")
         print(f"\u2022Error: {str(e)}")
 
 def blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_code2, sub_file):
@@ -251,7 +251,7 @@ def process_subtitles(csv_file, error_file):
                                     writer.writerow(non_english_sub)
                             print()
                     else:
-                        print("Failed to blacklist subtitle, keeping in logs/failed.csv...\n")
+                        print("ERROR: Failed to blacklist subtitle, keeping in logs/failed.csv...\n")
                 else:
                     print("Non-English subtitle, skipping!\n")
                     time.sleep(0.5)
@@ -320,7 +320,7 @@ def process_subtitle(is_movie, subtitle, csv_file):
     output, error = run_command(subaligner_command, sub_file)
     
     if has_error(output + error):
-        print("Something went wrong...")
+        print("ERROR: Something went wrong...")
         if blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_code2, sub_file):
             print("Successfully blacklisted subtitle, requesting new subtitle!")
             remove_from_list(csv_file, sub_file)
@@ -338,7 +338,7 @@ def process_subtitle(is_movie, subtitle, csv_file):
                 else:
                     print()
         else:
-            print("Failed to blacklist subtitle...")
+            print("ERROR: Failed to blacklist subtitle...")
             add_to_error_list(error_file, reference_file, sub_file, sub_code2, sub_code3, sub_id, provider, series_id, episode_id)
             remove_from_list(csv_file, sub_file)
             print("Moving subtitle entry to logs/failed.csv!")

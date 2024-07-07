@@ -36,5 +36,5 @@ if echo "$csv_line" >> "$CSV_FILE"; then
     echo "Successfully added \"$SUB_CODE2\"-subtitle to list!"
     sleep 0.1
 else
-    echo "Something went wrong, couldn't write to CSV-file..."
+    echo "ERROR: Something went wrong, couldn't write to CSV-file..."
 fi

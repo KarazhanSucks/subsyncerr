@@ -19,11 +19,11 @@ if [ -d "$HOST_SCRIPTS_DIR" ]; then
     if [ -f "$HOST_SCRIPTS_DIR/$script_name" ]; then
         echo "$script_name: Found"
     else
-        echo "$script_name: Not found"
+        echo "ERROR: \"$script_name\" not found"
     fi
     done
 else
-    echo "Make sure the container has the container path \"$HOST_SCRIPTS_DIR\" allocated..."
+    echo "ERROR: Make sure the container has the container path \"$HOST_SCRIPTS_DIR\" allocated..."
 fi
 
 # Set up cron job
