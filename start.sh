@@ -34,6 +34,8 @@ crontab /etc/cron.d/my-cron-job
 # Start cron
 cron
 
+tail -f /var/log/cron.log &
+
 echo "Cron-schedule in use: $CRON_SCHEDULE"
 
 # Keep container running and output status
