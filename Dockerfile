@@ -59,12 +59,14 @@ WORKDIR /opt/subcleaner
 RUN git clone https://github.com/KBlixt/subcleaner.git . && \
     python3 ./subcleaner.py -h
 
-WORKDIR /opt/scripts
-RUN git clone https://github.com/Tarzoq/subaligner-bazarr.git
+WORKDIR /opt/subaligner-bazarr
+RUN git clone https://github.com/Tarzoq/subaligner-bazarr.git && \
+    touch /var/log/cron.log && \
+    chmod +x /opt/subaligner-bazarr/start.sh
 
 # Clean up unnecessary files to reduce image size
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Optionally, set the working directory
 WORKDIR /working
-CMD ["/opt/scripts/start.sh"]
+CMD ["/opt/subaligner-bazarr/start.sh"]

@@ -9,9 +9,9 @@ import re
 import fcntl
 from datetime import datetime
 
-API_KEY = os.getenv["API_KEY", "a2fe6181cefc9e93214a6b84ce8ec736"]
-BAZARR_URL = os.getenv["BAZARR_URL", "http://vpn:6767"]
-SUBCLEANER = os.getenv["SUBCLEANER", "false"].lower() == "true"
+API_KEY = os.getenv("API_KEY", "a2fe6181cefc9e93214a6b84ce8ec736")
+BAZARR_URL = os.getenv("BAZARR_URL", "http://vpn:6767")
+SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
 
 LOCK_FILE = '/tmp/scriptlock.lock'
 lock_file = None
@@ -263,6 +263,11 @@ def process_subtitles(csv_file, error_file):
                     writer = csv.writer(file)
                     writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
                     writer.writerows(error_list)
+                    
+            if not subtitles:
+                break
+            else:
+                process_subtitles(csv_file, error_file)
             
             print("List is clear!!!")
             break
@@ -315,7 +320,7 @@ def process_subtitle(is_movie, subtitle, csv_file):
     output, error = run_command(subaligner_command, sub_file)
     
     if has_error(output + error):
-        print(f"\u2022{output.rstrip()}")
+        print("Something went wrong...")
         if blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_code2, sub_file):
             print("Successfully blacklisted subtitle, requesting new subtitle!")
             remove_from_list(csv_file, sub_file)

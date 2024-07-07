@@ -1,8 +1,8 @@
 #!/bin/bash
 
 CRON_SCHEDULE=${CRON_SCHEDULE:-"30 * * * *"}
-HOST_SCRIPTS_DIR="/scripts"
-CONTAINER_SCRIPTS_DIR="/opt/git"
+HOST_SCRIPTS_DIR="/subaligner-bazarr"
+CONTAINER_SCRIPTS_DIR="/opt/subaligner-bazarr"
 
 # Copy scripts to host directory
 cp -R $CONTAINER_SCRIPTS_DIR/* $HOST_SCRIPTS_DIR/
