@@ -36,7 +36,7 @@ def release_lock():
 def run_command(command, sub_file):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
-    log_output(sub_file, command, output.decode('utf-8'))
+    log_output(sub_file, command, output.decode('utf-8'), timestamp)
     return output.decode('utf-8'), error.decode('utf-8')
 
 def log_output(sub_file, command, output, timestamp):
@@ -281,7 +281,7 @@ def process_subtitles(csv_file, error_file, timestamp):
                 print(f"{timestamp}: List is clear!!!")
                 break
             else:
-                process_subtitles(csv_file, error_file)
+                process_subtitles(csv_file, error_file, timestamp)
             
         current_count = len(subtitles)
         
@@ -394,6 +394,6 @@ if __name__ == "__main__":
         if not os.path.isfile(error_file):
             create_error_file(error_file)
             
-        process_subtitles(csv_file, error_file)
+        process_subtitles(csv_file, error_file, timestamp)
     finally:
         release_lock()
