@@ -13,6 +13,8 @@ API_KEY = os.getenv("API_KEY", "a2fe6181cefc9e93214a6b84ce8ec736")
 BAZARR_URL = os.getenv("BAZARR_URL", "http://vpn:6767")
 SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
 
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+
 LOCK_FILE = '/tmp/scriptlock.lock'
 lock_file = None
 
@@ -37,8 +39,7 @@ def run_command(command, sub_file):
     log_output(sub_file, command, output.decode('utf-8'))
     return output.decode('utf-8'), error.decode('utf-8')
 
-def log_output(sub_file, command, output):
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+def log_output(sub_file, command, output, timestamp):
     if 'subcleaner' in command:
         log_folder = '/subaligner-bazarr/logs/subcleaner'
     elif 'subaligner' in command:
