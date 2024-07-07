@@ -34,8 +34,8 @@ RUN apt-get -y update && \
         libavutil-dev && \
     apt-get -y clean
 
-RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install --upgrade setuptools wheel
+RUN python3 -m pip install --no-cache-dir --upgrade pip && \
+    python3 -m pip install --no-cache-dir --upgrade setuptools wheel
 
 RUN locale-gen "en_US.UTF-8"
 ENV LANG=en_US.UTF-8 \
@@ -44,15 +44,15 @@ ENV LANG=en_US.UTF-8 \
 
 WORKDIR /opt/subaligner
 RUN git clone https://github.com/baxtree/subaligner.git . && \
-    pip install -r requirements.txt && pip install -r requirements-stretch.txt && \
-    python3 -m pip install . && \
-    python3 -m pip install "subaligner[harmony]"
+    pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir -r requirements-stretch.txt && \
+    python3 -m pip install --no-cache-dir . && \
+    python3 -m pip install --no-cache-dir "subaligner[harmony]"
 
 WORKDIR /opt/subsync
 RUN git clone https://github.com/sc0ty/subsync.git . && \
     cp subsync/config.py.template subsync/config.py && \
-    pip install -r requirements.txt && \
-    pip install .
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir .
 
 WORKDIR /opt/subcleaner
 RUN git clone https://github.com/KBlixt/subcleaner.git . && \
@@ -60,7 +60,7 @@ RUN git clone https://github.com/KBlixt/subcleaner.git . && \
 
 WORKDIR /opt/subaligner-bazarr
 RUN git clone https://github.com/Tarzoq/subaligner-bazarr.git . && \
-    pip install -r requirements.txt && \
+    pip install --no-cache-dir -r requirements.txt && \
     touch /var/log/cron.log && \
     chmod +x /opt/subaligner-bazarr/start.sh
 
