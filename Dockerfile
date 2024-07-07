@@ -42,22 +42,22 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-WORKDIR /opt/subaligner
-RUN git clone https://github.com/baxtree/subaligner.git . && \
-    pip install -r requirements.txt && pip install -r requirements-stretch.txt && \
-    python3 -m pip install . && \
-    python3 -m pip install "subaligner[harmony]"
+# WORKDIR /opt/subaligner
+# RUN git clone https://github.com/baxtree/subaligner.git . && \
+#     pip install -r requirements.txt && pip install -r requirements-stretch.txt && \
+#     python3 -m pip install . && \
+#     python3 -m pip install "subaligner[harmony]"
 
-WORKDIR /opt/subsync
-RUN git clone https://github.com/sc0ty/subsync.git . && \
-    cp subsync/config.py.template subsync/config.py && \
-    # mkdir /config && chmod 777 /config && \
-    pip install -r requirements.txt && \
-    pip install .
+# WORKDIR /opt/subsync
+# RUN git clone https://github.com/sc0ty/subsync.git . && \
+#     cp subsync/config.py.template subsync/config.py && \
+#     # mkdir /config && chmod 777 /config && \
+#     pip install -r requirements.txt && \
+#     pip install .
 
-WORKDIR /opt/subcleaner
-RUN git clone https://github.com/KBlixt/subcleaner.git . && \
-    python3 ./subcleaner.py -h
+# WORKDIR /opt/subcleaner
+# RUN git clone https://github.com/KBlixt/subcleaner.git . && \
+#     python3 ./subcleaner.py -h
 
 WORKDIR /opt/subaligner-bazarr
 RUN git clone https://github.com/Tarzoq/subaligner-bazarr.git . && \

@@ -15,19 +15,17 @@ if [ -f "$HOST_SCRIPTS_DIR" ]; then
             echo "Warning: $file not found in $CONTAINER_SCRIPTS_DIR"
         fi
     done
-else
-    echo "Make sure the container has the container path \"$HOST_SCRIPTS_DIR\" allocated..."
-fi
-
-# Check if scripts are present in host directory
-for script in $CONTAINER_SCRIPTS_DIR/*; do
+    for script in $FILES_TO_COPY; do
     script_name=$(basename $script)
     if [ -f "$HOST_SCRIPTS_DIR/$script_name" ]; then
         echo "  $script_name: Found"
     else
         echo "  $script_name: Not found"
     fi
-done
+    done
+else
+    echo "Make sure the container has the container path \"$HOST_SCRIPTS_DIR\" allocated..."
+fi
 
 # Set up cron job
 echo "$CRON_SCHEDULE /usr/local/bin/python $HOST_SCRIPTS_DIR/main.py >> /var/log/cron.log 2>&1" > /etc/cron.d/my-cron-job
