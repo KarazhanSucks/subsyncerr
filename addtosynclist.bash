@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define variables
-CSV_FILE="/scripts/unsynced.csv"
+CSV_FILE="/subaligner-bazarr/unsynced.csv"
 
 # Get command line arguments
 REFERENCE_FILE="$1"

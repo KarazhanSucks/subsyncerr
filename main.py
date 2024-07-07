@@ -40,13 +40,13 @@ def run_command(command, sub_file):
 def log_output(sub_file, command, output):
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     if 'subcleaner' in command:
-        log_folder = '/scripts/logs/subcleaner'
+        log_folder = '/subaligner-bazarr/logs/subcleaner'
     elif 'subaligner' in command:
-        log_folder = '/scripts/logs/subaligner'
+        log_folder = '/subaligner-bazarr/logs/subaligner'
     elif 'subsync' in command:
-        log_folder = '/scripts/logs/subsync'
+        log_folder = '/subaligner-bazarr/logs/subsync'
     else:
-        log_folder = '/scripts/logs'
+        log_folder = '/subaligner-bazarr/logs'
         
     os.makedirs(log_folder, exist_ok=True)
     cleaned_sub_file = re.sub(r'[\\/*?:"<>|]', " - ", sub_file)
@@ -372,8 +372,8 @@ def sync_to_english(subtitle, english_sub_path, csv_file):
 if __name__ == "__main__":
     acquire_lock()
     try:
-        csv_file = '/scripts/unsynced.csv'
-        error_file = '/scripts/logs/failed.csv'
+        csv_file = '/subaligner-bazarr/unsynced.csv'
+        error_file = '/subaligner-bazarr/logs/failed.csv'
         process_subtitles(csv_file, error_file)
     finally:
         release_lock()

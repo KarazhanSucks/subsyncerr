@@ -10,7 +10,6 @@ if [ -d "$HOST_SCRIPTS_DIR" ]; then
     for file in "${FILES_TO_COPY[@]}"; do
         if [ -f "$CONTAINER_SCRIPTS_DIR/$file" ]; then
             cp -R "$CONTAINER_SCRIPTS_DIR/$file" "$HOST_SCRIPTS_DIR/"
-            echo "Copied $file"
         else
             echo "Warning: $file not found in $CONTAINER_SCRIPTS_DIR"
         fi
@@ -18,9 +17,9 @@ if [ -d "$HOST_SCRIPTS_DIR" ]; then
     for script in "${FILES_TO_COPY[@]}"; do
     script_name=$(basename "$script")
     if [ -f "$HOST_SCRIPTS_DIR/$script_name" ]; then
-        echo "  $script_name: Found"
+        echo "$script_name: Found"
     else
-        echo "  $script_name: Not found"
+        echo "$script_name: Not found"
     fi
     done
 else
@@ -34,6 +33,8 @@ crontab /etc/cron.d/my-cron-job
 
 # Start cron
 cron
+
+echo "Cron-schedule in use: $CRON_SCHEDULE"
 
 # Keep container running and output status
 while true; do

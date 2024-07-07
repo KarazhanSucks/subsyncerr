@@ -5,37 +5,37 @@ ENV TZ=Europe/London
 
 # Update package list and install dependencies
 RUN apt-get -y update && \
-    apt-get -y install \
-        # requirements
-        ffmpeg \
-        python3-dev \
-        python3-pip\
-        git \
-        locales \
-        cron \
-        # subaligner
-        espeak \
-        libespeak1 \
-        libespeak-dev \
-        espeak-data \
-        libsndfile-dev \
-        libhdf5-dev \
-        python3-tk \
-        # subsync
-        python3-pybind11 \
-        libsphinxbase-dev \
-        libpocketsphinx-dev \
-        libavdevice-dev \
-        libavformat-dev \
-        libavfilter-dev \
-        libavcodec-dev \
-        libswresample-dev \
-        libswscale-dev \
-        libavutil-dev && \
-    apt-get -y clean
+    apt-get -y install cron locales git
+#         # requirements
+#         ffmpeg \
+#         python3-dev \
+#         python3-pip\
+#         git \
+#         locales \
+#         cron \
+#         # subaligner
+#         espeak \
+#         libespeak1 \
+#         libespeak-dev \
+#         espeak-data \
+#         libsndfile-dev \
+#         libhdf5-dev \
+#         python3-tk \
+#         # subsync
+#         python3-pybind11 \
+#         libsphinxbase-dev \
+#         libpocketsphinx-dev \
+#         libavdevice-dev \
+#         libavformat-dev \
+#         libavfilter-dev \
+#         libavcodec-dev \
+#         libswresample-dev \
+#         libswscale-dev \
+#         libavutil-dev && \
+#     apt-get -y clean
 
-RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install --upgrade setuptools wheel
+# RUN python3 -m pip install --upgrade pip && \
+#     python3 -m pip install --upgrade setuptools wheel
 
 RUN locale-gen "en_US.UTF-8"
 ENV LANG=en_US.UTF-8 \
