@@ -22,24 +22,24 @@ if [ -d "$HOST_SCRIPTS_DIR" ]; then
         echo "ERROR: \"$script_name\" not found"
     fi
     done
+
+    # Set up cron job
+    echo "$CRON_SCHEDULE python3 $HOST_SCRIPTS_DIR/main.py >> /var/log/cron.log 2>&1" > /etc/cron.d/my-cron-job
+    chmod 0644 /etc/cron.d/my-cron-job
+    crontab /etc/cron.d/my-cron-job
+
+    # Start cron
+    cron
+
+    tail -f /var/log/cron.log &
+
+    echo "Cron-schedule in use: $CRON_SCHEDULE"
+
+    # Keep container running and output status
+    while true; do
+        echo "$(date): Container is running!"
+        sleep 7200
+    done
 else
     echo "ERROR: Make sure the container has the container path \"$HOST_SCRIPTS_DIR\" allocated..."
 fi
-
-# Set up cron job
-echo "$CRON_SCHEDULE python3 $HOST_SCRIPTS_DIR/main.py >> /var/log/cron.log 2>&1" > /etc/cron.d/my-cron-job
-chmod 0644 /etc/cron.d/my-cron-job
-crontab /etc/cron.d/my-cron-job
-
-# Start cron
-cron
-
-tail -f /var/log/cron.log &
-
-echo "Cron-schedule in use: $CRON_SCHEDULE"
-
-# Keep container running and output status
-while true; do
-    echo "$(date): Container is running!"
-    sleep 7200
-done

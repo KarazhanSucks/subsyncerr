@@ -79,6 +79,19 @@ def replace_language_code(file_path):
         return en_sdh_path
     else:
         return None
+    
+def create_csv_file(csv_file):
+    with open(csv_file, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
+    
+    os.chmod(csv_file, 0o666)
+    
+def create_error_file(error_file):
+    os.makedirs(os.path.dirname(error_file), exist_ok=True)
+    with open(error_file, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
 
 def has_error(output):
     return "Error" in output or "ERROR" in output
@@ -142,9 +155,9 @@ def blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_co
 
 def download_new_subtitle(is_movie, series_id, episode_id, sub_code2):
     if is_movie:
-        url = f"{BAZARR_URL}/movies/subtitles?radarrid={episode_id}"
+        url = f"{BAZARR_URL}/api/movies/subtitles?radarrid={episode_id}"
     else:
-        url = f"{BAZARR_URL}/episodes/subtitles?seriesid={series_id}&episodeid={episode_id}"
+        url = f"{BAZARR_URL}/api/episodes/subtitles?seriesid={series_id}&episodeid={episode_id}"
     
     payload = {
         "language": sub_code2,
@@ -197,12 +210,6 @@ def remove_from_list(csv_file, sub_file):
     
 def process_subtitles(csv_file, error_file):
     processed_count = 0 
-    
-    # Check if failed.csv exists, if not create it with headers
-    if not os.path.isfile(error_file):
-        with open(error_file, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])      
     
     while True:
         with open(csv_file, 'r') as file:
@@ -263,14 +270,17 @@ def process_subtitles(csv_file, error_file):
                     writer = csv.writer(file)
                     writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
                     writer.writerows(error_list)
+            
+            with open(csv_file, 'r') as file:
+                reader = csv.reader(file)
+                header = next(reader)  # Read and skip the header row
+                subtitles = list(reader)
                     
             if not subtitles:
+                print("List is clear!!!")
                 break
             else:
                 process_subtitles(csv_file, error_file)
-            
-            print("List is clear!!!")
-            break
             
         current_count = len(subtitles)
         
@@ -363,7 +373,7 @@ def sync_to_english(subtitle, english_sub_path, csv_file):
         run_command(subcleaner_command, sub_file)
 
     print("Running subsync...")
-    subsync_command = f"subsync --cli sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-lang \"eng\" --ref-stream-by-type \"sub\" --out \"{sub_file}\" --window-size 150 --overwrite"
+    subsync_command = f"subsync --cli sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-lang \"eng\" --ref-stream-by-type \"sub\" --out \"{sub_file}\" --window-size 100 --overwrite"
     run_command(subsync_command, sub_file)
     
     print("Successfully synced non-English subtitle, removing from list!\n")
@@ -374,6 +384,15 @@ if __name__ == "__main__":
     try:
         csv_file = '/subaligner-bazarr/unsynced.csv'
         error_file = '/subaligner-bazarr/logs/failed.csv'
+        
+        # Check if unsynced.csv exists, if not create it with headers
+        if not os.path.isfile(csv_file):
+            create_csv_file(csv_file)
+            
+        # Check if failed.csv exists, if not create it with headers
+        if not os.path.isfile(error_file):
+            create_error_file(error_file)
+            
         process_subtitles(csv_file, error_file)
     finally:
         release_lock()
