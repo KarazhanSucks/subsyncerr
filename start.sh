@@ -27,7 +27,7 @@ else
 fi
 
 # Set up cron job
-echo "$CRON_SCHEDULE /usr/local/bin/python $HOST_SCRIPTS_DIR/main.py >> /var/log/cron.log 2>&1" > /etc/cron.d/my-cron-job
+echo "$CRON_SCHEDULE python3 $HOST_SCRIPTS_DIR/main.py >> /var/log/cron.log 2>&1" > /etc/cron.d/my-cron-job
 chmod 0644 /etc/cron.d/my-cron-job
 crontab /etc/cron.d/my-cron-job
 
