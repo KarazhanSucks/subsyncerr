@@ -3,20 +3,29 @@
 CRON_SCHEDULE=${CRON_SCHEDULE:-"30 * * * *"}
 HOST_SCRIPTS_DIR="/subaligner-bazarr"
 CONTAINER_SCRIPTS_DIR="/opt/subaligner-bazarr"
+FILES_TO_COPY=("addtosynclist.bash" "main.py")
 
 # Copy scripts to host directory
-cp -R $CONTAINER_SCRIPTS_DIR/* $HOST_SCRIPTS_DIR/
+if [ -f "$HOST_SCRIPTS_DIR" ]; then
+    for file in "${files_to_copy[@]}"; do
+        if [ -f "$CONTAINER_SCRIPTS_DIR/$file" ]; then
+            cp -R "$CONTAINER_SCRIPTS_DIR/$file" "$HOST_SCRIPTS_DIR/"
+            echo "Copied $file"
+        else
+            echo "Warning: $file not found in $CONTAINER_SCRIPTS_DIR"
+        fi
+    done
+else
+    echo "Make sure the container has the container path \"$HOST_SCRIPTS_DIR\" allocated..."
+fi
 
 # Check if scripts are present in host directory
-echo "Checking scripts in $HOST_SCRIPTS_DIR:"
 for script in $CONTAINER_SCRIPTS_DIR/*; do
     script_name=$(basename $script)
-    if [ "$script_name" != "start.sh" ]; then
-        if [ -f "$HOST_SCRIPTS_DIR/$script_name" ]; then
-            echo "  $script_name: Found"
-        else
-            echo "  $script_name: Not found"
-        fi
+    if [ -f "$HOST_SCRIPTS_DIR/$script_name" ]; then
+        echo "  $script_name: Found"
+    else
+        echo "  $script_name: Not found"
     fi
 done
 
