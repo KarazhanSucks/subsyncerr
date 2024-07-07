@@ -6,8 +6,8 @@ CONTAINER_SCRIPTS_DIR="/opt/subaligner-bazarr"
 FILES_TO_COPY=("addtosynclist.bash" "main.py")
 
 # Copy scripts to host directory
-if [ -f "$HOST_SCRIPTS_DIR" ]; then
-    for file in "${files_to_copy[@]}"; do
+if [ -d "$HOST_SCRIPTS_DIR" ]; then
+    for file in "${FILES_TO_COPY[@]}"; do
         if [ -f "$CONTAINER_SCRIPTS_DIR/$file" ]; then
             cp -R "$CONTAINER_SCRIPTS_DIR/$file" "$HOST_SCRIPTS_DIR/"
             echo "Copied $file"
@@ -15,8 +15,8 @@ if [ -f "$HOST_SCRIPTS_DIR" ]; then
             echo "Warning: $file not found in $CONTAINER_SCRIPTS_DIR"
         fi
     done
-    for script in $FILES_TO_COPY; do
-    script_name=$(basename $script)
+    for script in "${FILES_TO_COPY[@]}"; do
+    script_name=$(basename "$script")
     if [ -f "$HOST_SCRIPTS_DIR/$script_name" ]; then
         echo "  $script_name: Found"
     else
