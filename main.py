@@ -200,9 +200,9 @@ def process_subtitles(csv_file, error_file):
     
     # Check if failed.csv exists, if not create it with headers
     if not os.path.isfile(error_file):
-            with open(error_file, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])      
+        with open(error_file, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])      
     
     while True:
         with open(csv_file, 'r') as file:

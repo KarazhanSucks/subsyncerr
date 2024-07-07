@@ -5,7 +5,7 @@ ENV TZ=Europe/London
 
 # Update package list and install dependencies
 RUN apt-get -y update && \
-    apt-get -y install cron locales git python3-dev
+    apt-get -y install cron locales git python3-dev python3-pip
 #         # requirements
 #         ffmpeg \
 #         python3-dev \
@@ -61,6 +61,7 @@ ENV LANG=en_US.UTF-8 \
 
 WORKDIR /opt/subaligner-bazarr
 RUN git clone https://github.com/Tarzoq/subaligner-bazarr.git . && \
+    pip install -r requirements.txt && \
     touch /var/log/cron.log && \
     chmod +x /opt/subaligner-bazarr/start.sh
 
