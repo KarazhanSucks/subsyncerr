@@ -24,7 +24,7 @@ if [ -d "$HOST_SCRIPTS_DIR" ]; then
     echo "SUBCLEANER: ${SUBCLEANER}"
     echo "SLEEP: ${SLEEP}"
 
-    /usr/bin/python3 $CONTAINER_SCRIPTS_DIR/main.py | mainlog
+    /usr/bin/python3 $CONTAINER_SCRIPTS_DIR/main.py | tee mainlog
 
     # Keep container running and output status
     while true; do
