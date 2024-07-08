@@ -8,10 +8,17 @@ import json
 import re
 from datetime import datetime
 
-API_KEY = os.getenv("API_KEY", "a2fe6181cefc9e93214a6b84ce8ec736")
+API_KEY = os.getenv("API_KEY", "None")
 BAZARR_URL = os.getenv("BAZARR_URL", "http://localhost:6767")
 SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
 SLEEP = os.getenv("SLEEP", "300")
+
+print(f"API_KEY: {API_KEY}")
+print(f"BAZARR_URL: {BAZARR_URL}")
+print(f"SUBCLEANER: {SUBCLEANER}")
+print(f"SLEEP: {SLEEP}\n")
+
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
 def run_command(command, sub_file):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -256,6 +263,9 @@ def process_subtitles(csv_file, error_file, timestamp):
                 reader = csv.reader(file)
                 header = next(reader)  # Read and skip the header row
                 subtitles = list(reader)
+                
+            if not subtitles:
+                break
             
         current_count = len(subtitles)
         
@@ -367,8 +377,8 @@ if __name__ == "__main__":
         create_error_file(error_file)
         
     while True:
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         print(f"{timestamp}: Checking for subtitles...")
+        time.sleep(0.1)
         process_subtitles(csv_file, error_file, timestamp)
-        print(f"{timestamp}: List is clear!!!")
-        time.sleep({SLEEP})
+        print(f"{timestamp}: List is clear!!!\n")
+        time.sleep(float(SLEEP))

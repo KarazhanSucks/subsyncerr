@@ -13,24 +13,24 @@ RUN apt-get -y update && \
         git \
         locales \
         cron \
-        # # subaligner
-        # espeak \
-        # libespeak1 \
-        # libespeak-dev \
-        # espeak-data \
-        # libsndfile-dev \
-        # libhdf5-dev \
-        # python3-tk \
-        # # subsync
-        # python3-pybind11 \
-        # libsphinxbase-dev \
-        # libpocketsphinx-dev \
-        # libavdevice-dev \
-        # libavformat-dev \
-        # libavfilter-dev \
-        # libavcodec-dev \
-        # libswresample-dev \
-        # libswscale-dev \
+        # subaligner
+        espeak \
+        libespeak1 \
+        libespeak-dev \
+        espeak-data \
+        libsndfile-dev \
+        libhdf5-dev \
+        python3-tk \
+        # subsync
+        python3-pybind11 \
+        libsphinxbase-dev \
+        libpocketsphinx-dev \
+        libavdevice-dev \
+        libavformat-dev \
+        libavfilter-dev \
+        libavcodec-dev \
+        libswresample-dev \
+        libswscale-dev \
         libavutil-dev && \
     apt-get -y clean
 
@@ -42,21 +42,21 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-# WORKDIR /opt/subaligner
-# RUN git clone https://github.com/baxtree/subaligner.git . && \
-#     pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir -r requirements-stretch.txt && \
-#     python3 -m pip install --no-cache-dir . && \
-#     python3 -m pip install --no-cache-dir "subaligner[harmony]"
+WORKDIR /opt/subaligner
+RUN git clone https://github.com/baxtree/subaligner.git . && \
+    pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir -r requirements-stretch.txt && \
+    python3 -m pip install --no-cache-dir . && \
+    python3 -m pip install --no-cache-dir "subaligner[harmony]"
 
-# WORKDIR /opt/subsync
-# RUN git clone https://github.com/sc0ty/subsync.git . && \
-#     cp subsync/config.py.template subsync/config.py && \
-#     pip install --no-cache-dir -r requirements.txt && \
-#     pip install --no-cache-dir .
+WORKDIR /opt/subsync
+RUN git clone https://github.com/sc0ty/subsync.git . && \
+    cp subsync/config.py.template subsync/config.py && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir .
 
-# WORKDIR /opt/subcleaner
-# RUN git clone https://github.com/KBlixt/subcleaner.git . && \
-#     python3 ./subcleaner.py -h
+WORKDIR /opt/subcleaner
+RUN git clone https://github.com/KBlixt/subcleaner.git . && \
+    python3 ./subcleaner.py -h
 
 WORKDIR /opt/subaligner-bazarr
 RUN git clone https://github.com/Tarzoq/subaligner-bazarr.git . && \

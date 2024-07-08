@@ -6,32 +6,20 @@ FILE=("addtosynclist.bash")
 
 # Copy scripts to host directory
 if [ -d "$HOST_SCRIPTS_DIR" ]; then
-    if [ -f "$CONTAINER_SCRIPTS_DIR/$file" ]; then
-        cp -R "$CONTAINER_SCRIPTS_DIR/$file" "$HOST_SCRIPTS_DIR/"
+    if [ -f "$CONTAINER_SCRIPTS_DIR/$FILE" ]; then
+        cp -R "$CONTAINER_SCRIPTS_DIR/$FILE" "$HOST_SCRIPTS_DIR/"
+        chmod +x "$HOST_SCRIPTS_DIR/$FILE"
     else
-        echo "Warning: $file not found in $CONTAINER_SCRIPTS_DIR"
+        echo "Warning: $FILE not found in $CONTAINER_SCRIPTS_DIR"
     fi
 
-    script_name=$(basename "$script")
-    if [ -f "$HOST_SCRIPTS_DIR/$script_name" ]; then
+    if [ -f "$HOST_SCRIPTS_DIR/$FILE" ]; then
         echo "Scripts are in place!"
     else
-        echo "ERROR: \"$script_name\" not found"
+        echo "ERROR: \"$HOST_SCRIPTS_DIR/$FILE\" not found"
     fi
 
-    echo "API-KEY: ${API_KEY}"
-    echo "BAZARR_URL: ${BAZARR_URL}"
-    echo "SUBCLEANER: ${SUBCLEANER}"
-    echo "SLEEP: ${SLEEP}"
-
-    /usr/bin/python3 $CONTAINER_SCRIPTS_DIR/main.py | tee mainlog
-
-    # Keep container running and output status
-    while true; do
-        echo "$(date): Container is running!"
-        echo ""
-        sleep 7200
-    done
+    /usr/bin/python3 -u $CONTAINER_SCRIPTS_DIR/main.py | tee mainlog
 else
     echo "ERROR: Make sure the container has the container path \"$HOST_SCRIPTS_DIR\" allocated..."
 fi
