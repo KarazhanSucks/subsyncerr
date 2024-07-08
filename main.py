@@ -6,32 +6,12 @@ import subprocess
 import requests
 import json
 import re
-import fcntl
 from datetime import datetime
 
 API_KEY = os.getenv("API_KEY", "a2fe6181cefc9e93214a6b84ce8ec736")
 BAZARR_URL = os.getenv("BAZARR_URL", "http://localhost:6767")
 SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
-
-timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
-LOCK_FILE = '/tmp/scriptlock.lock'
-lock_file = None
-
-def acquire_lock():
-    global lock_file
-    lock_file = open(LOCK_FILE, 'w')
-    try:
-        fcntl.lockf(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        print("Another instance of the script is already running. Exiting!")
-        sys.exit(1)
-        
-def release_lock():
-    global lock_file
-    fcntl.lockf(lock_file, fcntl.LOCK_UN)
-    lock_file.close()
-    os.unlink(LOCK_FILE)
+SLEEP = os.getenv("SLEEP", "300")
 
 def run_command(command, sub_file):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -276,12 +256,6 @@ def process_subtitles(csv_file, error_file, timestamp):
                 reader = csv.reader(file)
                 header = next(reader)  # Read and skip the header row
                 subtitles = list(reader)
-                    
-            if not subtitles:
-                print(f"{timestamp}: List is clear!!!")
-                break
-            else:
-                process_subtitles(csv_file, error_file, timestamp)
             
         current_count = len(subtitles)
         
@@ -319,14 +293,14 @@ def process_subtitle(is_movie, subtitle, csv_file):
 
     if SUBCLEANER:
         print("Running subcleaner...")
-        subcleaner_command = f"python3 /opt/subcleaner/subcleaner.py \"{sub_file}\""
+        subcleaner_command = f"/usr/bin/python3 /opt/subcleaner/subcleaner.py \"{sub_file}\""
         run_command(subcleaner_command, sub_file)
 
     print("Running subaligner...")
     if sub_code2 == "en":
-        subaligner_command = f"subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 360"
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 360"
     else:
-        subaligner_command = f"subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 360 -sil \"{sub_code3}\""
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 360 -sil \"{sub_code3}\""
 
     output, error = run_command(subaligner_command, sub_file)
     
@@ -370,30 +344,31 @@ def sync_to_english(subtitle, english_sub_path, csv_file):
     
     if SUBCLEANER:
         print("Running subcleaner...")
-        subcleaner_command = f"python3 /opt/subcleaner/subcleaner.py \"{sub_file}\""
+        subcleaner_command = f"/usr/bin/python3 /opt/subcleaner/subcleaner.py \"{sub_file}\""
         run_command(subcleaner_command, sub_file)
 
     print("Running subsync...")
-    subsync_command = f"subsync --cli sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-lang \"eng\" --ref-stream-by-type \"sub\" --out \"{sub_file}\" --window-size 100 --overwrite"
+    subsync_command = f"/usr/local/bin/subsync --cli sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-lang \"eng\" --ref-stream-by-type \"sub\" --out \"{sub_file}\" --window-size 100 --overwrite"
     run_command(subsync_command, sub_file)
     
     print("Successfully synced non-English subtitle, removing from list!\n")
     remove_from_list(csv_file, sub_file)
 
 if __name__ == "__main__":
-    acquire_lock()
-    try:
-        csv_file = '/subaligner-bazarr/unsynced.csv'
-        error_file = '/subaligner-bazarr/logs/failed.csv'
+    csv_file = '/subaligner-bazarr/unsynced.csv'
+    error_file = '/subaligner-bazarr/logs/failed.csv'
+    
+    # Check if unsynced.csv exists, if not create it with headers
+    if not os.path.isfile(csv_file):
+        create_csv_file(csv_file)
         
-        # Check if unsynced.csv exists, if not create it with headers
-        if not os.path.isfile(csv_file):
-            create_csv_file(csv_file)
-            
-        # Check if failed.csv exists, if not create it with headers
-        if not os.path.isfile(error_file):
-            create_error_file(error_file)
-            
+    # Check if failed.csv exists, if not create it with headers
+    if not os.path.isfile(error_file):
+        create_error_file(error_file)
+        
+    while True:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        print(f"{timestamp}: Checking for subtitles...")
         process_subtitles(csv_file, error_file, timestamp)
-    finally:
-        release_lock()
+        print(f"{timestamp}: List is clear!!!")
+        time.sleep({SLEEP})
