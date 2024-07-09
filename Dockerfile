@@ -12,6 +12,7 @@ RUN apt-get -y update && \
         python3-pip\
         git \
         locales \
+        nano \
         cron \
         # subaligner
         espeak \
@@ -61,7 +62,6 @@ RUN git clone https://github.com/KBlixt/subcleaner.git . && \
 WORKDIR /opt/subaligner-bazarr
 RUN git clone https://github.com/Tarzoq/subaligner-bazarr.git . && \
     pip install --no-cache-dir -r requirements.txt && \
-    touch /var/log/cron.log && \
     chmod +x /opt/subaligner-bazarr/start.sh
 
 # Clean up unnecessary files to reduce image size
