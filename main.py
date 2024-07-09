@@ -308,9 +308,9 @@ def process_subtitle(is_movie, subtitle, csv_file):
 
     print("Running subaligner...")
     if sub_code2 == "en":
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 360"
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 1000"
     else:
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 360 -sil \"{sub_code3}\""
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 1000 -sil \"{sub_code3}\""
 
     output, error = run_command(subaligner_command, sub_file)
     
