@@ -18,11 +18,10 @@ print(f"BAZARR_URL: {BAZARR_URL}")
 print(f"SUBCLEANER: {SUBCLEANER}")
 print(f"SLEEP: {SLEEP}\n")
 
-timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
 def run_command(command, sub_file):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     log_output(sub_file, command, output.decode('utf-8'), timestamp)
     return output.decode('utf-8'), error.decode('utf-8')
 
@@ -35,6 +34,8 @@ def log_output(sub_file, command, output, timestamp):
         log_folder = '/subaligner-bazarr/logs/subsync'
     else:
         log_folder = '/subaligner-bazarr/logs'
+        
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         
     os.makedirs(log_folder, exist_ok=True)
     cleaned_sub_file = re.sub(r'[\\/*?:"<>|]', " - ", sub_file)
@@ -196,7 +197,7 @@ def remove_from_list(csv_file, sub_file):
         
     time.sleep(0.5)
     
-def process_subtitles(csv_file, error_file, timestamp):
+def process_subtitles(csv_file, error_file):
     processed_count = 0 
     
     while True:
@@ -308,9 +309,9 @@ def process_subtitle(is_movie, subtitle, csv_file):
 
     print("Running subaligner...")
     if sub_code2 == "en":
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 1000"
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 850"
     else:
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 1000 -sil \"{sub_code3}\""
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 850 -sil \"{sub_code3}\""
 
     output, error = run_command(subaligner_command, sub_file)
     
@@ -377,8 +378,12 @@ if __name__ == "__main__":
         create_error_file(error_file)
         
     while True:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         print(f"{timestamp}: Checking for subtitles...")
         time.sleep(0.1)
-        process_subtitles(csv_file, error_file, timestamp)
+        
+        process_subtitles(csv_file, error_file)
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         print(f"{timestamp}: List is clear!!!\n")
         time.sleep(float(SLEEP))
