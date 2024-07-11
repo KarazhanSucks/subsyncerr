@@ -1,6 +1,7 @@
 # subaligner-bazarr
 subaligner (baxtree) + subsync (sc0ty) + subcleaner (KBlixt)
 
+
 API_KEY = API key for Bazarr, this one is required and is used to blacklist and request new subtitles in case subaligner receives an error
 
 BAZARR_URL = IP address or hostname for Bazarr (default is: http:localhost:6767)
@@ -11,5 +12,5 @@ SLEEP = time waiting to check list if it is empty, insert a number (default 300 
 
 
 Things to fix:
-Timestamp in main.py doesn't update time because placed in top of code where it is only processed once.
-Change -mpt in subaligner from 360 to 1000, to support older slower computers that need more time to extract audio from video.
+Add a stopwatch right next to the "Processed, Remaining" row, which stops whenever the current process finishes, giving the user a good overview of how much time each processed subtitle has taken.
+Create a small server or have the ability to connect a server on the side to output the log to be used in apps like NZB360 to view current status.
