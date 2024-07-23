@@ -69,6 +69,16 @@ def replace_language_code(file_path):
     else:
         return None
     
+def extract_filename(sub_file):
+    # Extract just the filename without path and extension
+    filename = os.path.basename(sub_file)
+    filename = os.path.splitext(filename)[0]
+    
+    # Remove .hi, .cc, or .sdh if present
+    filename = re.sub(r'\.([a-z]{2})(\.(hi|cc|sdh))?$', '', filename)
+    
+    return filename
+    
 def create_csv_file(csv_file):
     with open(csv_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
@@ -82,8 +92,15 @@ def create_error_file(error_file):
         writer = csv.writer(f)
         writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
 
-def has_error(output):
-    return "Error" in output or "ERROR" in output
+def has_error(output, sub_file):
+    # Extract the filename
+    filename = extract_filename(sub_file)
+    
+    # Remove the filename from the output
+    cleaned_output = output.replace(sub_file, '').replace(filename, '')
+    
+    #Check for "Error" or "ERROR" in the cleaned output
+    return "Error" in cleaned_output or "ERROR" in cleaned_output
 
 def add_to_error_list(error_file, reference_file, sub_file, sub_code2, sub_code3, sub_id, provider, series_id, episode_id):
     # Prepare the data to be written
@@ -309,13 +326,13 @@ def process_subtitle(is_movie, subtitle, csv_file):
 
     print("Running subaligner...")
     if sub_code2 == "en":
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 850"
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -mpt 1250"
     else:
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -mpt 850 -sil \"{sub_code3}\""
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -mpt 1250 -sil \"{sub_code3}\""
 
     output, error = run_command(subaligner_command, sub_file)
     
-    if has_error(output + error):
+    if has_error(output + error, sub_file):
         print("ERROR: Something went wrong...")
         if blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_code2, sub_file):
             print("Successfully blacklisted subtitle, requesting new subtitle!")
