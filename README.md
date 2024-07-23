@@ -22,3 +22,6 @@ Add a stopwatch right next to the "Processed, Remaining" row, which stops whenev
 
 
 Create a small server or have the ability to connect a server on the side to output the log to be used in apps like NZB360 to view current status.
+
+
+Add a healthcheck for Bazarr IP/Hostname and API-key before starting main.py in the docker
