@@ -62,11 +62,11 @@ RUN git clone https://github.com/KBlixt/subcleaner.git . && \
 WORKDIR /opt/subaligner-bazarr
 RUN git clone https://github.com/Tarzoq/subaligner-bazarr.git . && \
     pip install --no-cache-dir -r requirements.txt && \
-    chmod +x /opt/subaligner-bazarr/start.sh
+    chmod +x /opt/subaligner-bazarr/start.py
 
 # Clean up unnecessary files to reduce image size
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Optionally, set the working directory
 WORKDIR /working
-CMD ["/opt/subaligner-bazarr/start.sh"]
+CMD ["python3", "/opt/subaligner-bazarr/start.py"]

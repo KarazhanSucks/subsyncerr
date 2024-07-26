@@ -13,11 +13,6 @@ BAZARR_URL = os.getenv("BAZARR_URL", "http://localhost:6767")
 SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
 SLEEP = os.getenv("SLEEP", "300")
 
-print(f"API_KEY: {API_KEY}")
-print(f"BAZARR_URL: {BAZARR_URL}")
-print(f"SUBCLEANER: {SUBCLEANER}")
-print(f"SLEEP: {SLEEP}\n")
-
 def run_command(command, sub_file):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
@@ -295,7 +290,9 @@ def process_subtitles(csv_file, error_file):
         english_subtitle = next((sub for sub in subtitles if sub[2] == english_sub_path), None)
         
         processed_count += 1
-        print(f"Processed: {processed_count}, Remaining: {current_count}")
+        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        print(f"[{timestamp}] Processed: {processed_count}, Remaining: {current_count}")
         time.sleep(0.1)
 
         if sub_code2 != 'en':
@@ -326,9 +323,9 @@ def process_subtitle(is_movie, subtitle, csv_file):
 
     print("Running subaligner...")
     if sub_code2 == "en":
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -mpt 1250"
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -sat 120 -mpt 3150"
     else:
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -mpt 1250 -sil \"{sub_code3}\""
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -sat 120 -mpt 3150 -sil \"{sub_code3}\""
 
     output, error = run_command(subaligner_command, sub_file)
     

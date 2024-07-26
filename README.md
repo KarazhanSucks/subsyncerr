@@ -2,6 +2,8 @@
 subaligner (baxtree) + subsync (sc0ty) + subcleaner (KBlixt)
 <br />
 
+Written with the help of Claude 3.5-Sonnet, the best coding AI in the world at the time.
+
 # Environment Variables
 ~~~
 API_KEY = API key for Bazarr, required to blacklist and request new subtitles in case subaligner receives an error
