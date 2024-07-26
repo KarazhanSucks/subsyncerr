@@ -69,4 +69,4 @@ RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Optionally, set the working directory
 WORKDIR /working
-CMD ["python3", "/opt/subaligner-bazarr/start.py"]
+CMD ["python3", "-u", "/opt/subaligner-bazarr/start.py"]
