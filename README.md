@@ -18,6 +18,7 @@ SUBCLEANER = true or false for if you want subcleaner to process the subtitles (
 SLEEP = time waiting to check list if it is empty, insert a number (default 300 seconds)
 ~~~
 <br />
+
 # Things to fix:
 Add a stopwatch right next to the "Processed, Remaining" row, which stops whenever the current process finishes, giving the user a good overview of how much time each processed subtitle has taken.
 
