@@ -7,11 +7,7 @@ import importlib.util
 
 HOST_SCRIPTS_DIR = "/subaligner-bazarr"
 CONTAINER_SCRIPTS_DIR = "/opt/subaligner-bazarr"
-REPO_URL = "https://github.com/tarzoq/subaligner-bazarr"
 FILE = "addtosynclist.bash"
-START = "start.py"
-FILES_TO_CHECK = [FILE, "main.py", "requirements.txt", START]
-
 
 # Import variables from main.py
 spec = importlib.util.spec_from_file_location("main", os.path.join(CONTAINER_SCRIPTS_DIR, "main.py"))
@@ -53,39 +49,6 @@ def bazarr_status(max_retries=5, delay=10):
 if os.path.isdir(HOST_SCRIPTS_DIR):
     if bazarr_status():
         print("Bazarr connection successful!!!\n")
-        
-        print("Fetching updates...")
-        try:
-            # Enable sparse checkout
-            subprocess.run(["/usr/bin/git", "-C", CONTAINER_SCRIPTS_DIR, "config", "core.sparsecheckout", "true"], check=True)
-            
-            # Define which files to check out
-            with open(os.path.join(CONTAINER_SCRIPTS_DIR, ".git/info/sparse-checkout"), "w") as f:
-                for file in FILES_TO_CHECK:
-                    f.write(f"{file}\n")
-                    
-            # Fetch the latest changes
-            subprocess.run(["/usr/bin/git", "-C", CONTAINER_SCRIPTS_DIR, "fetch", "origin", "main"], check=True)
-            
-            # Check if there are any changes
-            result = subprocess.run(["/usr/bin/git", "-C", CONTAINER_SCRIPTS_DIR, "diff", "--quiet", "HEAD", "origin/main"], capture_output=True)
-            
-            if result.returncode != 0:
-                # There are changes, so pull them
-                subprocess.run(["/usr/bin/git", "-C", CONTAINER_SCRIPTS_DIR, "pull", "origin", "main"], check=True)
-                print("Updates installed successfully!!!\n")
-                
-                # Check if there are any changes
-                result = subprocess.run(["/usr/bin/git", "-C", CONTAINER_SCRIPTS_DIR, "diff", "--quiet", "HEAD", "origin/main", "--", START], capture_output=True)
-                
-                if result.returncode != 0:
-                    print("WARNING: Init script updated, restart container to apply updates!\n")
-                
-            else:
-                print("Files are already up to date!!!\n")       
-            
-        except subprocess.CalledProcessError:
-            print("Update check failed...\n")
         
         if os.path.isfile(os.path.join(CONTAINER_SCRIPTS_DIR, FILE)):
             shutil.copy2(os.path.join(CONTAINER_SCRIPTS_DIR, FILE), HOST_SCRIPTS_DIR)
