@@ -33,40 +33,40 @@ RUN apt-get -y update && \
         libswresample-dev \
         libswscale-dev \
         libavutil-dev && \
-    apt-get -y clean
+    apt-get -y clean && \
+    # python3
+    python3 -m pip install --no-cache-dir --upgrade pip && \
+    python3 -m pip install --no-cache-dir --upgrade setuptools wheel && \
+    # locale
+    locale-gen "en_US.UTF-8"
 
-RUN python3 -m pip install --no-cache-dir --upgrade pip && \
-    python3 -m pip install --no-cache-dir --upgrade setuptools wheel
-
-RUN locale-gen "en_US.UTF-8"
 ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-WORKDIR /opt/subaligner
-RUN git clone https://github.com/baxtree/subaligner.git . && \
+RUN mkdir "/opt/subaligner" && cd "$_" && \
+    # subaligner
+    git clone https://github.com/baxtree/subaligner.git . && \
     pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir -r requirements-stretch.txt && \
     python3 -m pip install --no-cache-dir . && \
-    python3 -m pip install --no-cache-dir "subaligner[harmony]"
-
-WORKDIR /opt/subsync
-RUN git clone https://github.com/sc0ty/subsync.git . && \
+    python3 -m pip install --no-cache-dir "subaligner[harmony]" && \
+    mkdir "/opt/subsync" && cd "$_" && \
+    # subsync
+    git clone https://github.com/sc0ty/subsync.git . && \
     cp subsync/config.py.template subsync/config.py && \
     pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir .
-
-WORKDIR /opt/subcleaner
-RUN git clone https://github.com/KBlixt/subcleaner.git . && \
-    python3 ./subcleaner.py -h
-
-WORKDIR /opt/subaligner-bazarr
-RUN git clone https://github.com/Tarzoq/subaligner-bazarr.git . && \
+    pip install --no-cache-dir . && \
+    mkdir "/opt/subcleaner" && cd "$_" && \
+    # subcleaner
+    git clone https://github.com/KBlixt/subcleaner.git . && \
+    python3 ./subcleaner.py -h && \
+    mkdir "/opt/subaligner-bazarr" && cd "$_" && \
+    # subaligner-bazarr
+    git clone https://github.com/Tarzoq/subaligner-bazarr.git . && \
     pip install --no-cache-dir -r requirements.txt && \
-    chmod +x /opt/subaligner-bazarr/start.py
+    chmod +x /opt/subaligner-bazarr/start.py && \
+    # Clean up unnecessary files to reduce image size
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Clean up unnecessary files to reduce image size
-RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Optionally, set the working directory
 WORKDIR /working
 CMD ["python3", "-u", "/opt/subaligner-bazarr/start.py"]

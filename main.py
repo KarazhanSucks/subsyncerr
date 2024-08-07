@@ -91,9 +91,8 @@ def has_error(output, sub_file):
     
     # Remove the filename from the output
     cleaned_output = output.replace(sub_file, '').replace(filename, '')
-    
-    #Check for "Error" or "ERROR" in the cleaned output
-    return "Error" in cleaned_output or "ERROR" in cleaned_output
+
+    return "Error" in cleaned_output or "ERROR" in cleaned_output or "failed" in cleaned_output
 
 def add_to_error_list(error_file, reference_file, sub_file, sub_code2, sub_code3, sub_id, provider, series_id, episode_id):
     # Prepare the data to be written
@@ -352,9 +351,9 @@ def process_subtitle(is_movie, subtitle, csv_file):
 
     print("Running subaligner...")
     if sub_code2 == "en":
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -sat 120 -mpt 3150"
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -sat 120 -mpt 3150"
     else:
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -d -sat 120 -mpt 3150 -sil \"{sub_code3}\""
+        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -sat 120 -mpt 3150 -sil \"{sub_code3}\""
 
     output, error = run_command(subaligner_command, sub_file)
     
