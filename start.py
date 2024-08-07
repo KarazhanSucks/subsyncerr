@@ -56,12 +56,6 @@ if os.path.isdir(HOST_SCRIPTS_DIR):
         
         print("Fetching updates...")
         try:
-            # Initialize a new git repository
-            subprocess.run(["/usr/bin/git", "init", CONTAINER_SCRIPTS_DIR], check=True)
-            
-            # Add the remote
-            subprocess.run(["/usr/bin/git", "-C", CONTAINER_SCRIPTS_DIR, "remote", "add", "origin", REPO_URL], check=True)
-            
             # Enable sparse checkout
             subprocess.run(["/usr/bin/git", "-C", CONTAINER_SCRIPTS_DIR, "config", "core.sparsecheckout", "true"], check=True)
             
@@ -91,7 +85,7 @@ if os.path.isdir(HOST_SCRIPTS_DIR):
                 print("Files are already up to date!!!\n")       
             
         except subprocess.CalledProcessError:
-            print("Something went wrong...\n")
+            print("Update check failed...\n")
         
         if os.path.isfile(os.path.join(CONTAINER_SCRIPTS_DIR, FILE)):
             shutil.copy2(os.path.join(CONTAINER_SCRIPTS_DIR, FILE), HOST_SCRIPTS_DIR)
