@@ -94,7 +94,7 @@ if os.path.isdir(HOST_SCRIPTS_DIR):
             print(f"Warning: {FILE} not found in {CONTAINER_SCRIPTS_DIR}")
 
         if os.path.isfile(os.path.join(HOST_SCRIPTS_DIR, FILE)):
-            print("Scripts are in place!!!\n")
+            print("Scripts are in place, initializing program!!!\n")
         else:
             print(f"ERROR: \"{os.path.join(HOST_SCRIPTS_DIR, FILE)}\" not found")
 
