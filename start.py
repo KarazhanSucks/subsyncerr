@@ -9,6 +9,8 @@ HOST_SCRIPTS_DIR = "/subaligner-bazarr"
 CONTAINER_SCRIPTS_DIR = "/opt/subaligner-bazarr"
 FILE = "addtosynclist.bash"
 
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+
 # Import variables from main.py
 spec = importlib.util.spec_from_file_location("main", os.path.join(CONTAINER_SCRIPTS_DIR, "main.py"))
 main = importlib.util.module_from_spec(spec)
@@ -60,6 +62,12 @@ if os.path.isdir(HOST_SCRIPTS_DIR):
             print("Scripts are in place, initializing program!!!\n")
         else:
             print(f"ERROR: \"{os.path.join(HOST_SCRIPTS_DIR, FILE)}\" not found")
+            
+        if DEBUG:
+            while True:
+                print("Debug environment-variable detected, not running main.py!")
+                time.sleep(300)
+                print()
 
         # Run the Python script and tee the output
         with open("mainlog", "w") as log_file:

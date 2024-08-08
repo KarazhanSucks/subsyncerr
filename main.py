@@ -91,8 +91,13 @@ def has_error(output, sub_file):
     
     # Remove the filename from the output
     cleaned_output = output.replace(sub_file, '').replace(filename, '')
-
-    return "Error" in cleaned_output or "ERROR" in cleaned_output or "failed" in cleaned_output
+    
+    if "Error" in cleaned_output or "ERROR" in cleaned_output or "failed" in cleaned_output:
+        if "Maximum head room reached" in cleaned_output:
+            return 'nosync'
+        return True
+    else:
+        return None
 
 def add_to_error_list(error_file, reference_file, sub_file, sub_code2, sub_code3, sub_id, provider, series_id, episode_id):
     # Prepare the data to be written
@@ -179,17 +184,34 @@ def download_new_subtitle(is_movie, series_id, episode_id, sub_code2):
         print(f"\u2022API-request failed: {str(e)}")
         return False
     
-def process_non_english_counterpart(csv_file, english_sub_file):
+def process_non_english_counterpart(csv_file, reference_file, english_sub_file):
     with open(csv_file, 'r') as file:
         reader = csv.reader(file)
         subtitles = list(reader)
         
     for subtitle in subtitles[1:]:
-        if subtitle[1] == english_sub_file:
+        if subtitle[1] == reference_file:
             non_english_subs = [sub for sub in subtitles[1:] if sub[1] == subtitle[1] and sub[2] != english_sub_file]
             for non_english_sub in non_english_subs:
                 add_to_error_list(error_file, *non_english_sub[1:9])
                 remove_from_list(csv_file, non_english_sub[2])
+                
+def find_non_english_counterpart(csv_file, reference_file, english_sub_file, new_sub_content):
+    with open(csv_file, 'r') as file:
+        reader = csv.reader(file)
+        subtitles = list(reader)
+        
+    for subtitle in subtitles[1:]:
+        if subtitle[1] == reference_file:
+            non_english_subs = [sub for sub in subtitles[1:] if sub[1] == subtitle[1] and sub[2] != english_sub_file]
+            for non_english_sub in non_english_subs:
+                with open(non_english_sub[2], 'w') as f:
+                    f.write(f"{new_sub_content}")     
+                    
+                remove_from_list(csv_file, non_english_sub[2]) 
+                time.sleep(0.5)
+                
+                print(f"Overwrote \"{non_english_sub[3]}\"-subtitle and removed from list!")           
 
 def remove_from_list(csv_file, sub_file):
     with open(csv_file, 'r') as file:
@@ -224,6 +246,8 @@ def remove_from_error_list(error_file, sub_file):
     
 def process_subtitles(csv_file, error_file):
     processed_count = 0 
+    
+    print()
     
     while True:
         with open(csv_file, 'r') as file:
@@ -270,7 +294,7 @@ def process_subtitles(csv_file, error_file):
                         non_english_subs = [sub for sub in error_list if sub[1] == subtitle[1] and sub[3] != 'en']
                         for non_english_sub in non_english_subs:
                             remove_from_error_list(error_file, non_english_sub)
-                            print("Moving non-English subtitle entry back to unsynced.csv!")
+                            print(f"Moving \"{non_english_sub[3]}\"-subtitle entry back to unsynced.csv!")
                             with open(csv_file, 'a', newline='') as file:
                                 writer = csv.writer(file)
                                 writer.writerow(non_english_sub)
@@ -281,7 +305,7 @@ def process_subtitles(csv_file, error_file):
                         non_english_subs = [sub for sub in error_list if sub[1] == subtitle[1] and sub[3] != 'en']
                         for non_english_sub in non_english_subs:
                             remove_from_error_list(error_file, non_english_sub)
-                            print("Moving non-English subtitle entry back to unsynced.csv!")
+                            print(f"Moving \"{non_english_sub[3]}\"-subtitle entry back to unsynced.csv!")
                             with open(csv_file, 'a', newline='') as file:
                                 writer = csv.writer(file)
                                 writer.writerow(non_english_sub)
@@ -293,7 +317,7 @@ def process_subtitles(csv_file, error_file):
                     non_english_subs = [sub for sub in error_list if sub[1] == subtitle[1] and sub[3] != 'en']
                     for non_english_sub in non_english_subs:
                         remove_from_error_list(error_file, non_english_sub)
-                        print("Removing non-English subtitle from logs/failed.csv...")
+                        print(f"Removing \"{non_english_sub[3]}\"-subtitle from logs/failed.csv...")
                     print()
                 else:
                     print("ERROR: Failed to blacklist subtitle, keeping in logs/failed.csv...\n")
@@ -357,7 +381,7 @@ def process_subtitle(is_movie, subtitle, csv_file):
 
     output, error = run_command(subaligner_command, sub_file)
     
-    if has_error(output + error, sub_file):
+    if has_error(output + error, sub_file) == True:
         print("ERROR: Something went wrong...")
         blacklist_result = blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_code2, sub_file)
         if blacklist_result == True:
@@ -372,7 +396,7 @@ def process_subtitle(is_movie, subtitle, csv_file):
                 remove_from_list(csv_file, sub_file)
                 print("Moving subtitle entry to logs/failed.csv!")
                 if sub_code2 == 'en':
-                    process_non_english_counterpart(csv_file, reference_file)
+                    process_non_english_counterpart(csv_file, reference_file, sub_file)
                     print("Moving non-English subtitle entry to logs/failed.csv!\n")
                 else:
                     print()
@@ -385,17 +409,37 @@ def process_subtitle(is_movie, subtitle, csv_file):
             remove_from_list(csv_file, sub_file)
             print("Moving subtitle entry to logs/failed.csv!")
             if sub_code2 == 'en':
-                process_non_english_counterpart(csv_file, reference_file)
-                print("Moving non-English subtitle entry to logs/failed.csv!\n")
-            else:
-                print()
+                process_non_english_counterpart(csv_file, reference_file, sub_file)
+                print("Moving non-English subtitle entry to logs/failed.csv!")
+            print()
+                
+    elif has_error(output + error, sub_file) == 'nosync':
+        print("Couldn't synchronize to media file, replacing subtitle contents...")
+        
+        new_sub_content = "1\n00:00:01,00 --> 00:00:11,00\nCouldn't synchronize subtitle, please switch to a different one. This subtitle ends here."
+        
+        with open(sub_file, 'w') as f:
+            f.write(f"{new_sub_content}")
+        
+        if sub_code2 == "en":
+            remove_from_list(csv_file, sub_file)
+            
+            print("Overwrote English-subtitle and removed from list!")
+            
+            find_non_english_counterpart(csv_file, reference_file, sub_file, new_sub_content)
+            
+            print()
+        else:  
+            remove_from_list(csv_file, sub_file)
+            
+            print(f"Overwrote \"{sub_code2}\"-subtitle and removed from list!\n")
             
     else:
         print("Successfully synced subtitle, removing from list!\n")
         remove_from_list(csv_file, sub_file)
 
 def sync_to_english(subtitle, english_sub_path, csv_file):
-    sub_file, sub_code3 = subtitle[1], subtitle[3]
+    sub_file, sub_code2, sub_code3 = subtitle[1], subtitle[2], subtitle[3]
     
     print(f"Processing non-English subtitle: {sub_file}")
     
@@ -408,7 +452,7 @@ def sync_to_english(subtitle, english_sub_path, csv_file):
     subsync_command = f"/usr/local/bin/subsync --cli sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-lang \"eng\" --ref-stream-by-type \"sub\" --out \"{sub_file}\" --window-size 100 --overwrite"
     run_command(subsync_command, sub_file)
     
-    print("Successfully synced non-English subtitle, removing from list!\n")
+    print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!\n")
     remove_from_list(csv_file, sub_file)
 
 if __name__ == "__main__":
