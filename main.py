@@ -98,7 +98,7 @@ def has_error(output, sub_file):
     # Remove the filename from the output
     cleaned_output = output.replace(sub_file, '').replace(filename, '')
     
-    if "Error" in cleaned_output or "ERROR" in cleaned_output or "failed" in cleaned_output:
+    if "Error" in cleaned_output or "ERROR" in cleaned_output:
         if "Maximum head room reached" in cleaned_output:
             return 'nosync'
         return True
