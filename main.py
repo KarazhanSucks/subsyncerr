@@ -99,7 +99,7 @@ def has_error(output, sub_file):
     cleaned_output = output.replace(sub_file, '').replace(filename, '')
     
     if "Error" in cleaned_output or "ERROR" in cleaned_output or "failed" in cleaned_output:
-        if "Maximum head room reached" in cleaned_output or "Found overlapping subtitle cues" in cleaned_output:
+        if "Maximum head room reached" in cleaned_output:
             return 'nosync'
         return True
     else:
@@ -422,7 +422,7 @@ def process_subtitle(is_movie, subtitle, csv_file):
     elif has_error(output + error, sub_file) == 'nosync':
         print("Couldn't synchronize to media file, replacing subtitle contents...")
         
-        new_sub_content = "1\n00:00:01,00 --> 00:00:11,00\nCouldn't synchronize subtitle, please switch to a different one. This subtitle ends here."
+        new_sub_content = "1\n00:00:01,00 --> 00:00:06,00\nCouldn't synchronize subtitle, please switch to a different one. This subtitle ends here."
         
         with open(sub_file, 'w') as f:
             f.write(f"{new_sub_content}")
@@ -441,7 +441,7 @@ def process_subtitle(is_movie, subtitle, csv_file):
             print(f"Overwrote \"{sub_code2}\"-subtitle and removed from list!\n")
             
     else:
-        print("Successfully synced subtitle, removing from list!\n")
+        print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!\n")
         remove_from_list(csv_file, sub_file)
 
 def sync_to_english(subtitle, english_sub_path, csv_file):
