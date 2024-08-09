@@ -6,6 +6,8 @@ import requests
 import re
 from datetime import datetime
 
+os.environ["PYTHONUNBUFFERED"] = "1"
+
 API_KEY = os.getenv("API_KEY", "None")
 BAZARR_URL = os.getenv("BAZARR_URL", "http://localhost:6767")
 SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
@@ -13,12 +15,16 @@ SLEEP = os.getenv("SLEEP", "300")
 
 def run_command(command, sub_file):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, error = process.communicate()
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    log_output(sub_file, command, output.decode('utf-8'), timestamp)
-    return output.decode('utf-8'), error.decode('utf-8')
+    
+    raw_output, raw_error = process.communicate()
+    
+    output = raw_output.decode('utf-8')
+    error = raw_error.decode('utf-8')
+    
+    log_output(sub_file, command, output)
+    return output, error
 
-def log_output(sub_file, command, output, timestamp):
+def log_output(sub_file, command, output):
     if 'subcleaner' in command:
         log_folder = '/subaligner-bazarr/logs/subcleaner'
     elif 'subaligner' in command:
@@ -28,14 +34,14 @@ def log_output(sub_file, command, output, timestamp):
     else:
         log_folder = '/subaligner-bazarr/logs'
         
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
         
     os.makedirs(log_folder, exist_ok=True)
     cleaned_sub_file = re.sub(r'[\\/*?:"<>|]', " - ", sub_file)
     filename = f"{timestamp}{cleaned_sub_file}.log"
     log_path = os.path.join(log_folder, filename)
     
-    with open(log_path, 'w') as log_file:
+    with open(log_path, 'w', encoding="utf-8") as log_file:
         log_file.write(f"Command: {command}\n\n")
         log_file.write("Output:\n")
         log_file.write(output)
@@ -93,7 +99,7 @@ def has_error(output, sub_file):
     cleaned_output = output.replace(sub_file, '').replace(filename, '')
     
     if "Error" in cleaned_output or "ERROR" in cleaned_output or "failed" in cleaned_output:
-        if "Maximum head room reached" in cleaned_output:
+        if "Maximum head room reached" in cleaned_output or "Found overlapping subtitle cues" in cleaned_output:
             return 'nosync'
         return True
     else:
@@ -370,14 +376,14 @@ def process_subtitle(is_movie, subtitle, csv_file):
 
     if SUBCLEANER:
         print("Running subcleaner...")
-        subcleaner_command = f"/usr/bin/python3 /opt/subcleaner/subcleaner.py \"{sub_file}\""
+        subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py \"{sub_file}\""
         run_command(subcleaner_command, sub_file)
 
     print("Running subaligner...")
     if sub_code2 == "en":
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -sat 120 -mpt 3150"
+        subaligner_command = f"/usr/bin/python3 -u /usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -sat 120 -mpt 3150"
     else:
-        subaligner_command = f"/usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -sat 120 -mpt 3150 -sil \"{sub_code3}\""
+        subaligner_command = f"/usr/bin/python3 -u /usr/local/bin/subaligner -m dual -v \"{reference_file}\" -s \"{sub_file}\" -o \"{sub_file}\" -so -sat 120 -mpt 3150 -sil \"{sub_code3}\""
 
     output, error = run_command(subaligner_command, sub_file)
     
@@ -445,11 +451,11 @@ def sync_to_english(subtitle, english_sub_path, csv_file):
     
     if SUBCLEANER:
         print("Running subcleaner...")
-        subcleaner_command = f"/usr/bin/python3 /opt/subcleaner/subcleaner.py \"{sub_file}\""
+        subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py \"{sub_file}\""
         run_command(subcleaner_command, sub_file)
 
     print("Running subsync...")
-    subsync_command = f"/usr/local/bin/subsync --cli sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-lang \"eng\" --ref-stream-by-type \"sub\" --out \"{sub_file}\" --window-size 100 --overwrite"
+    subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-lang \"eng\" --ref-stream-by-type \"sub\" --out \"{sub_file}\" --window-size 100 --overwrite"
     run_command(subsync_command, sub_file)
     
     print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!\n")

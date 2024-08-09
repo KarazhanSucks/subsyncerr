@@ -5,6 +5,8 @@ import time
 import requests
 import importlib.util
 
+os.environ["PYTHONUNBUFFERED"] = "1"
+
 HOST_SCRIPTS_DIR = "/subaligner-bazarr"
 CONTAINER_SCRIPTS_DIR = "/opt/subaligner-bazarr"
 FILE = "addtosynclist.bash"
@@ -80,6 +82,7 @@ if os.path.isdir(HOST_SCRIPTS_DIR):
             for line in process.stdout:
                 print(line, end="")
                 log_file.write(line)
+                
             process.wait()
     else:
         print(f"ERROR: Bazarr connection unsuccessful, please check the containers following environment varibles: \"BAZARR_URL\" & \"API_KEY\"!")
