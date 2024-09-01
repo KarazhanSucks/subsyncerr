@@ -24,3 +24,6 @@ Add a stopwatch right next to the "Processed, Remaining" row, which stops whenev
 
 
 Create a small server or have the ability to connect a server on the side to output the log to be used in apps like NZB360 to view current status.
+
+
+Implement a temp file remover to prevent docker from increasing in ram usage when idle.
