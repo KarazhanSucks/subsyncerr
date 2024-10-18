@@ -2,6 +2,8 @@
 subsync (sc0ty) + subcleaner (KBlixt)
 <br />
 
+Will soon get to write a proper README-file, complete all steps required to get this awesome lifesaving script up and running.
+
 Written with the help of Claude 3.5-Sonnet, the best coding AI in the world at the time.
 
 # Environment Variables
@@ -30,5 +32,5 @@ Create a small server or have the ability to connect a server on the side to out
 
 
 ~~~
-bash /subaligner-bazarr/addtosynclist.bash '{{episode}}' '{{subtitles}}' '{{subtitles_language_code2}}' '{{subtitles_language_code3}}' '{{episode_language_code3}}' '{{subtitle_id}}' '{{provider}}' '{{series_id}}' '{{episode_id}}'
+bash /subsync-bazarr/addtosynclist.bash '{{episode}}' '{{subtitles}}' '{{subtitles_language_code2}}' '{{subtitles_language_code3}}' '{{episode_language_code3}}' '{{subtitle_id}}' '{{provider}}' '{{series_id}}' '{{episode_id}}'
 ~~~

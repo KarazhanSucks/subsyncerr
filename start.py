@@ -86,6 +86,6 @@ if os.path.isdir(HOST_SCRIPTS_DIR):
                 
             process.wait()
     else:
-        print(f"ERROR: Bazarr connection unsuccessful, please check the containers following environment varibles: \"BAZARR_URL\" & \"API_KEY\"!")
+        print(f"ERROR: Bazarr connection unsuccessful, please check the containers following environment variables: \"BAZARR_URL\" & \"API_KEY\"!")
 else:
     print(f"ERROR: Make sure the container has the container path \"{HOST_SCRIPTS_DIR}\" allocated...")

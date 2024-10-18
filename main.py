@@ -308,8 +308,6 @@ def remove_from_retry_list(retry_file, sub_file):
 def process_subtitles(csv_file, retry_file):
     processed_count = 0 
     
-    print()
-    
     while True:
         with open(csv_file, 'r') as file:
             reader = csv.reader(file)
@@ -325,6 +323,8 @@ def process_subtitles(csv_file, retry_file):
                     
                 if not retry_list:
                     break
+                
+                print()
                 
                 subtitle = retry_list[0]  # Get and remove the first subtitle
                              
@@ -393,7 +393,8 @@ def process_subtitles(csv_file, retry_file):
                 
             if not subtitles:
                 break
-            
+        print()    
+        
         current_count = len(subtitles)
         
         subtitle = subtitles[0]  # Get and remove the first subtitle
@@ -432,7 +433,7 @@ def process_subtitle(is_movie, subtitle, csv_file):
 
     if SUBCLEANER:
         print("Running subcleaner...")
-        subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py --language \"{sub_code3}\" \"{sub_file}\""
+        subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py --language \"{sub_code2}\" \"{sub_file}\""
         run_command(subcleaner_command, sub_file)
 
     print("Running subsync...")
@@ -512,7 +513,7 @@ def sync_to_english(subtitle, english_sub_path, csv_file):
     
     if SUBCLEANER:
         print("Running subcleaner...")
-        subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py --language \"{sub_code3}\" \"{sub_file}\""
+        subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py --language \"{sub_code2}\" \"{sub_file}\""
         run_command(subcleaner_command, sub_file)
 
     print("Running subsync for non-English subtitle...")
