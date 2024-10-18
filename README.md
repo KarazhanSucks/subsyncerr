@@ -1,5 +1,5 @@
-# subaligner-bazarr
-subaligner (baxtree) + subsync (sc0ty) + subcleaner (KBlixt)
+# subsync-bazarr
+subsync (sc0ty) + subcleaner (KBlixt)
 <br />
 
 Written with the help of Claude 3.5-Sonnet, the best coding AI in the world at the time.
@@ -17,6 +17,9 @@ SUBCLEANER = true or false for if you want subcleaner to process the subtitles (
 ~~~
 SLEEP = time waiting to check list if it is empty, insert a number (default 300 seconds)
 ~~~
+~~~
+WINDOW_SIZE = maximum amount of time spent synchronizing subtitle, lower this if subtitles take too long to finish (default 1800 seconds)
+~~~
 <br />
 
 # Things to fix:
@@ -24,6 +27,3 @@ Add a stopwatch right next to the "Processed, Remaining" row, which stops whenev
 
 
 Create a small server or have the ability to connect a server on the side to output the log to be used in apps like NZB360 to view current status.
-
-
-Implement a temp file remover to prevent docker from increasing in ram usage when idle.

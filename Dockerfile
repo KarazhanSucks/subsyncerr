@@ -8,23 +8,15 @@ ENV TZ=Europe/London
 RUN apt-get -y update && \
     apt-get -y install \
         # requirements
-        ffmpeg \
         python3-dev \
         python3-pip\
         git \
         locales \
         nano \
         cron \
-        # subaligner
-        espeak \
-        libespeak1 \
-        libespeak-dev \
-        espeak-data \
-        libsndfile-dev \
-        libhdf5-dev \
-        python3-tk \
         # subsync
         python3-pybind11 \
+        ffmpeg \
         libsphinxbase-dev \
         libpocketsphinx-dev \
         libavdevice-dev \
@@ -33,11 +25,11 @@ RUN apt-get -y update && \
         libavcodec-dev \
         libswresample-dev \
         libswscale-dev \
-        libavutil-dev && \
+        libavutil-dev \
+        libportaudio2 && \
     apt-get -y clean && \
     # python3
-    python3 -m pip install --no-cache-dir --upgrade pip && \
-    python3 -m pip install --no-cache-dir --upgrade setuptools wheel && \
+    pip3 install --no-cache-dir --upgrade pip setuptools wheel && \
     # locale
     locale-gen "en_US.UTF-8"
 
@@ -47,16 +39,16 @@ ENV LANG=en_US.UTF-8 \
 
 RUN mkdir "/opt/subsync" && cd "/opt/subsync" && \
     # subsync
-    git clone https://github.com/matt1432/subsync.git . && \
+    git clone https://github.com/sc0ty/subsync.git . && \
     cp subsync/config.py.template subsync/config.py && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir . && \
+    pip3 install --no-cache-dir -r requirements.txt && \
+    pip3 install --no-cache-dir . && \
     mkdir "/opt/subcleaner" && cd "/opt/subcleaner" && \
     # subcleaner
     git clone https://github.com/KBlixt/subcleaner.git . && \
     python3 ./subcleaner.py -h && \
     mkdir "/opt/subsync-bazarr" && cd "/opt/subsync-bazarr" && \
-    # subaligner-bazarr
+    # subsync-bazarr
     git clone https://github.com/Tarzoq/subsync-bazarr.git . && \
     pip install --no-cache-dir -r requirements.txt && \
     chmod +x /opt/subsync-bazarr/start.py && \
