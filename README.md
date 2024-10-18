@@ -27,3 +27,8 @@ Add a stopwatch right next to the "Processed, Remaining" row, which stops whenev
 
 
 Create a small server or have the ability to connect a server on the side to output the log to be used in apps like NZB360 to view current status.
+
+
+~~~
+bash /subaligner-bazarr/addtosynclist.bash '{{episode}}' '{{subtitles}}' '{{subtitles_language_code2}}' '{{subtitles_language_code3}}' '{{episode_language_code3}}' '{{subtitle_id}}' '{{provider}}' '{{series_id}}' '{{episode_id}}'
+~~~
