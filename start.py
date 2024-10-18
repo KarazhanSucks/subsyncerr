@@ -21,7 +21,7 @@ spec.loader.exec_module(main)
 print(f"API_KEY: {main.API_KEY}")
 print(f"BAZARR_URL: {main.BAZARR_URL}")
 print(f"SUBCLEANER: {main.SUBCLEANER}")
-print(f"SLEEP: {main.SLEEP}\n")
+print(f"SLEEP: {main.SLEEP}")
 print(f"WINDOW_SIZE: {main.WINDOW_SIZE}\n")
 
 def bazarr_status(max_retries=5, delay=10):
