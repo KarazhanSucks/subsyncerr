@@ -45,15 +45,9 @@ ENV LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
     LC_ALL=en_US.UTF-8
 
-RUN mkdir "/opt/subaligner" && cd "/opt/subaligner" && \
-    # subaligner
-    git clone https://github.com/baxtree/subaligner.git . && \
-    pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir -r requirements-stretch.txt && \
-    python3 -m pip install --no-cache-dir . && \
-    python3 -m pip install --no-cache-dir "subaligner[harmony]" && \
-    mkdir "/opt/subsync" && cd "/opt/subsync" && \
+RUN mkdir "/opt/subsync" && cd "/opt/subsync" && \
     # subsync
-    git clone https://github.com/sc0ty/subsync.git . && \
+    git clone https://github.com/matt1432/subsync.git . && \
     cp subsync/config.py.template subsync/config.py && \
     pip install --no-cache-dir -r requirements.txt && \
     pip install --no-cache-dir . && \
@@ -61,13 +55,13 @@ RUN mkdir "/opt/subaligner" && cd "/opt/subaligner" && \
     # subcleaner
     git clone https://github.com/KBlixt/subcleaner.git . && \
     python3 ./subcleaner.py -h && \
-    mkdir "/opt/subaligner-bazarr" && cd "/opt/subaligner-bazarr" && \
+    mkdir "/opt/subsync-bazarr" && cd "/opt/subsync-bazarr" && \
     # subaligner-bazarr
-    git clone https://github.com/Tarzoq/subaligner-bazarr.git . && \
+    git clone https://github.com/Tarzoq/subsync-bazarr.git . && \
     pip install --no-cache-dir -r requirements.txt && \
-    chmod +x /opt/subaligner-bazarr/start.py && \
+    chmod +x /opt/subsync-bazarr/start.py && \
     # Clean up unnecessary files to reduce image size
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /working
-CMD ["python3", "-u", "/opt/subaligner-bazarr/start.py"]
+CMD ["python3", "-u", "/opt/subsync-bazarr/start.py"]

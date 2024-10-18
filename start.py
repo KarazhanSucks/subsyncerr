@@ -7,8 +7,8 @@ import importlib.util
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 
-HOST_SCRIPTS_DIR = "/subaligner-bazarr"
-CONTAINER_SCRIPTS_DIR = "/opt/subaligner-bazarr"
+HOST_SCRIPTS_DIR = "/subsync-bazarr"
+CONTAINER_SCRIPTS_DIR = "/opt/subsync-bazarr"
 FILE = "addtosynclist.bash"
 
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
@@ -22,6 +22,7 @@ print(f"API_KEY: {main.API_KEY}")
 print(f"BAZARR_URL: {main.BAZARR_URL}")
 print(f"SUBCLEANER: {main.SUBCLEANER}")
 print(f"SLEEP: {main.SLEEP}\n")
+print(f"WINDOW_SIZE: {main.WINDOW_SIZE}\n")
 
 def bazarr_status(max_retries=5, delay=10):
     url = f"{main.BAZARR_URL}/api/system/status"
@@ -68,7 +69,7 @@ if os.path.isdir(HOST_SCRIPTS_DIR):
         if DEBUG:
             while True:
                 print("Debug environment-variable detected, not running main.py!")
-                time.sleep(300)
+                time.sleep(1800)
                 print()
 
         # Run the Python script and tee the output

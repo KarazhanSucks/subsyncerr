@@ -35,11 +35,11 @@ def run_command(command, sub_file):
 
 def log_output(sub_file, command, output):
     if 'subcleaner' in command:
-        log_folder = '/subaligner-bazarr/logs/subcleaner'
+        log_folder = '/subsync-bazarr/logs/subcleaner'
     elif 'subsync' in command:
-        log_folder = '/subaligner-bazarr/logs/subsync'
+        log_folder = '/subsync-bazarr/logs/subsync'
     else:
-        log_folder = '/subaligner-bazarr/logs'
+        log_folder = '/subsync-bazarr/logs'
         
     timestamp = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
         
@@ -523,9 +523,9 @@ def sync_to_english(subtitle, english_sub_path, csv_file):
     remove_from_list(csv_file, sub_file)
 
 if __name__ == "__main__":
-    csv_file = '/subaligner-bazarr/unsynced.csv'
-    retry_file = '/subaligner-bazarr/logs/retry.csv'
-    failed_file = '/subaligner-bazarr/failed.txt'
+    csv_file = '/subsync-bazarr/unsynced.csv'
+    retry_file = '/subsync-bazarr/logs/retry.csv'
+    failed_file = '/subsync-bazarr/failed.txt'
     
     # Check if unsynced.csv exists, if not create it with headers
     if not os.path.isfile(csv_file):
