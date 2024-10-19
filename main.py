@@ -517,7 +517,7 @@ def sync_to_english(subtitle, english_sub_path, csv_file):
         run_command(subcleaner_command, sub_file)
 
     print("Running subsync for non-English subtitle...")
-    subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-lang \"eng\" --ref-stream-by-type \"sub\" --out \"{sub_file}\""
+    subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-stream-by-type \"sub\" --ref-lang \"eng\" --out \"{sub_file}\" --overwrite"
     run_command(subsync_command, sub_file)
     
     print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!\n")
