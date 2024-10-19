@@ -34,10 +34,10 @@ def run_command(command, sub_file):
     return output, error, False
 
 def log_output(sub_file, command, output):
-    if 'subcleaner' in command:
-        log_folder = '/subsync-bazarr/logs/subcleaner'
-    elif 'subsync' in command:
+    if 'subsync' in command:
         log_folder = '/subsync-bazarr/logs/subsync'
+    elif 'subcleaner' in command:
+        log_folder = '/subsync-bazarr/logs/subcleaner'
     else:
         log_folder = '/subsync-bazarr/logs'
         
@@ -413,40 +413,56 @@ def process_subtitles(csv_file, retry_file):
         if sub_code2 != 'en':
             # This is a non-English subtitle
             if english_subtitle:
-                process_subtitle(english_subtitle[8] == "", english_subtitle[1:10], csv_file)
+                process_subtitle(english_subtitle[8] == "", english_subtitle[1:10], csv_file, None)
             elif english_sub_path:
-                sync_to_english(subtitle[1:10], english_sub_path, csv_file)
+                process_subtitle(is_movie, subtitle[1:10], csv_file, english_sub_path)
             else:
                 print("No English subtitle found. Processing with subsync...")
-                process_subtitle(is_movie, subtitle[1:10], csv_file)
+                process_subtitle(is_movie, subtitle[1:10], csv_file, None)
         else:
             # This is an English subtitle
-            process_subtitle(is_movie, subtitle[1:10], csv_file)
+            process_subtitle(is_movie, subtitle[1:10], csv_file, None)
 
         time.sleep(0.1)  # Add a small delay between processing subtitles
 
-def process_subtitle(is_movie, subtitle, csv_file):
+def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
     reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id = subtitle
     
-    print(f"Processing subtitle: {sub_file}")
-    time.sleep(0.1)
-
-    if SUBCLEANER:
-        print("Running subcleaner...")
-        subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py --language \"{sub_code2}\" \"{sub_file}\""
-        run_command(subcleaner_command, sub_file)
-
-    print("Running subsync...")
-
-    subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --out \"{sub_file}\" --overwrite"
-    output, error, fail = run_command(subsync_command, sub_file)
-    
-    if fail:
-        print(f"Audio track language unknown, trying again with \"{ep_code3}\" as reference language...")
+    if not english_sub_path:
+        print(f"Processing subtitle: {sub_file}")
         time.sleep(0.1)
-        
-        subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"{sub_file}\" --overwrite"
+
+        if SUBCLEANER:
+            print("Running subcleaner...")
+            subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py --language \"{sub_code2}\" \"{sub_file}\""
+            run_command(subcleaner_command, sub_file)
+
+        print("Running subsync...")
+
+        subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --out \"{sub_file}\" --overwrite"
         output, error, fail = run_command(subsync_command, sub_file)
+    
+        if fail:
+            print(f"Audio track language unknown, trying again with \"{ep_code3}\" as reference language...")
+            time.sleep(0.1)
+            
+            subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"{sub_file}\" --overwrite"
+            output, error, fail = run_command(subsync_command, sub_file)        
+    else:
+        print(f"Processing non-English subtitle: {sub_file}")
+        time.sleep(0.1)
+    
+        if SUBCLEANER:
+            print("Running subcleaner...")
+            subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py --language \"{sub_code2}\" \"{sub_file}\""
+            run_command(subcleaner_command, sub_file)
+
+        print("Running subsync for non-English subtitle...")
+        subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"300\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-stream-by-type \"sub\" --ref-lang \"eng\" --out \"{sub_file}\" --overwrite"
+        output, error, fail = run_command(subsync_command, sub_file)
+        
+        print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!\n")
+        remove_from_list(csv_file, sub_file)
         
     if has_error(output + error, sub_file) == True:
         print("ERROR: Something went wrong...")
@@ -505,23 +521,6 @@ def process_subtitle(is_movie, subtitle, csv_file):
     else:
         print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!\n")
         remove_from_list(csv_file, sub_file)
-
-def sync_to_english(subtitle, english_sub_path, csv_file):
-    sub_file, sub_code2, sub_code3 = subtitle[1], subtitle[2], subtitle[3]
-    
-    print(f"Processing non-English subtitle: {sub_file}")
-    
-    if SUBCLEANER:
-        print("Running subcleaner...")
-        subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py --language \"{sub_code2}\" \"{sub_file}\""
-        run_command(subcleaner_command, sub_file)
-
-    print("Running subsync for non-English subtitle...")
-    subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-stream-by-type \"sub\" --ref-lang \"eng\" --out \"{sub_file}\" --overwrite"
-    run_command(subsync_command, sub_file)
-    
-    print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!\n")
-    remove_from_list(csv_file, sub_file)
 
 if __name__ == "__main__":
     csv_file = '/subsync-bazarr/unsynced.csv'
