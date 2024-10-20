@@ -242,18 +242,6 @@ def download_new_subtitle(is_movie, series_id, episode_id, sub_code2):
     except requests.RequestException as e:
         print(f"\u2022API-request failed: {str(e)}")
         return False
-    
-def process_non_english_counterpart(csv_file, reference_file, english_sub_file):
-    with open(csv_file, 'r') as file:
-        reader = csv.reader(file)
-        subtitles = list(reader)
-        
-    for subtitle in subtitles[1:]:
-        if subtitle[1] == reference_file:
-            non_english_subs = [sub for sub in subtitles[1:] if sub[1] == subtitle[1] and sub[2] != english_sub_file]
-            for non_english_sub in non_english_subs:
-                add_to_retry_list(retry_file, *non_english_sub[1:10])
-                remove_from_list(csv_file, non_english_sub[2])
                 
 def find_non_english_counterpart(csv_file, reference_file, english_sub_file, move_to_failed):
     with open(csv_file, 'r') as file:
@@ -472,16 +460,14 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 if new_subtitle:
                     print("Successfully downloaded new subtitle, adding to list!\n")
                     
-                    move_to_failed = False
-                    process_non_english_counterpart(csv_file, reference_file, sub_file, move_to_failed)           
+                    find_non_english_counterpart(csv_file, reference_file, sub_file, False)           
                 else:
                     print("No new subtitles found, removing from list...")
                     add_to_retry_list(retry_file, reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id)
                     remove_from_list(csv_file, sub_file)
                     print("Moving subtitle entry to logs/retry.csv!")
                     if sub_code2 == 'en':
-                        move_to_failed = True
-                        process_non_english_counterpart(csv_file, reference_file, sub_file, move_to_failed)
+                        find_non_english_counterpart(csv_file, reference_file, sub_file, True)
                         print("Moving non-English subtitle entry to logs/retry.csv!\n")
                     else:
                         print()
@@ -496,7 +482,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 print("Moving subtitle entry to logs/retry.csv!")
                 
                 if sub_code2 == 'en':
-                    process_non_english_counterpart(csv_file, reference_file, sub_file)
+                    find_non_english_counterpart(csv_file, reference_file, sub_file, False)
                     print("Moving non-English subtitle entry to logs/retry.csv!")
                 print()
                     
@@ -509,8 +495,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
             if sub_code2 == "en":
                 print(f"Removed English-subtitle from list and added it to failed.txt!")
                 
-                move_to_failed = True
-                find_non_english_counterpart(csv_file, reference_file, sub_file, move_to_failed)
+                find_non_english_counterpart(csv_file, reference_file, sub_file, True)
                 
                 print()
             else:  
