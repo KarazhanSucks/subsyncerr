@@ -1,5 +1,5 @@
 # subsync-bazarr
-subsync (sc0ty) + subcleaner (KBlixt)
+subsync (sc0ty) + subcleaner (KBlixt) + srt-lang-detect (mdcollins05)
 <br />
 
 Will soon get to write a proper README-file, complete all steps required to get this awesome lifesaving script up and running.

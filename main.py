@@ -2,6 +2,7 @@ import os
 import csv
 import time
 import subprocess
+import shutil
 import requests
 import re
 from datetime import datetime
@@ -14,7 +15,7 @@ SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
 SLEEP = os.getenv("SLEEP", "300")
 WINDOW_SIZE = os.getenv("WINDOW_SIZE", "1800")
 
-def run_command(command, sub_file):
+def run_command(command, sub_file, log_command):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     
     raw_output, raw_error = process.communicate()
@@ -26,11 +27,12 @@ def run_command(command, sub_file):
     
     # Remove the filename from the output
     cleaned_output = output.replace(sub_file, '').replace(filename, '')
+    output = output.replace("/dev/shm/tmp.srt", sub_file)
     
     if "Select reference language first" in cleaned_output:
         return output, error, True
     
-    log_output(sub_file, command, output)
+    log_output(sub_file, log_command, output)
     return output, error, False
 
 def log_output(sub_file, command, output):
@@ -54,6 +56,20 @@ def log_output(sub_file, command, output):
         log_file.write(output)
         
     time.sleep(0.1)
+    
+def srt_lang_detect(command, sub_file):
+    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    raw_output = process.communicate()
+    output = raw_output.decode('utf-8')
+    filename = extract_filename(sub_file)
+    
+    # Remove the filename from the output
+    cleaned_output = output.replace(sub_file, '').replace(filename, '')
+    
+    if "Parsing" in cleaned_output:
+        return True
+    elif "Would rename" in cleaned_output:
+        return False
 
 def replace_language_code(file_path):
     base, ext = os.path.splitext(file_path)
@@ -90,8 +106,6 @@ def create_csv_file(csv_file):
         writer = csv.writer(f)
         writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'episode_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
     
-    os.chmod(csv_file, 0o666)
-    
 def create_retry_file(retry_file):
     os.makedirs(os.path.dirname(retry_file), exist_ok=True)
     with open(retry_file, 'w', newline='', encoding='utf-8') as f:
@@ -107,13 +121,12 @@ def has_error(output, sub_file):
     
     if "couldn't synchronize!" in cleaned_output:
         return True
-    elif "potential overpruning" in cleaned_output or "recognition model is missing" in cleaned_output:
+    elif cleaned_output or "recognition model is missing" in cleaned_output or "progress 100%, 0 points" in cleaned_output:
         return 'nosync'
     else:
         return None
     
 def add_to_failed_list(sub_file):
-    # Prepare the data to be written
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     data = f"{timestamp}: {sub_file}\n"
 
@@ -127,7 +140,6 @@ def add_to_failed_list(sub_file):
         print(f"\u2022Error: {str(e)}")
     
 def add_to_csv_list(csv_file, reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id):
-    # Prepare the data to be written
     data = [
         datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         reference_file,
@@ -147,7 +159,6 @@ def add_to_csv_list(csv_file, reference_file, sub_file, sub_code2, sub_code3, ep
                 writer = csv.writer(f)
                 writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'episode_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
 
-        # Append the new data to the CSV file
         with open(csv_file, 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(data)
@@ -211,7 +222,7 @@ def blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_co
         if response.status_code in [404, 500]:
             return 'remove'
         response.raise_for_status()
-        time.sleep(0.1)
+        time.sleep(2)
         return True
     except requests.RequestException as e:
         print(f"\u2022API-request failed: {str(e)}")
@@ -243,24 +254,48 @@ def download_new_subtitle(is_movie, series_id, episode_id, sub_code2):
         print(f"\u2022API-request failed: {str(e)}")
         return False
                 
-def find_non_english_counterpart(csv_file, reference_file, english_sub_file, move_to_failed):
+def find_non_english_counterpart(csv_file, reference_file, sub_file, move_to_failed):
     with open(csv_file, 'r') as file:
         reader = csv.reader(file)
         subtitles = list(reader)
         
     for subtitle in subtitles[1:]:
         if subtitle[1] == reference_file:
-            non_english_subs = [sub for sub in subtitles[1:] if sub[1] == subtitle[1] and sub[2] != english_sub_file]
-            for non_english_sub in non_english_subs:     
-                remove_from_list(csv_file, non_english_sub[2])
+            while True:
+                non_english_subs = [sub for sub in subtitles[1:] if sub[1] == subtitle[1] and sub[2] != sub_file]
                 
-                if move_to_failed:
-                    add_to_failed_list(non_english_sub[2])
-                    time.sleep(0.5)
+                if not non_english_subs:
+                    break
                 
-                    print(f"Removed \"{non_english_sub[3]}\"-subtitle from list and added it to failed.txt!")
-                else:
-                    add_to_csv_list(csv_file, *non_english_sub[1:10])          
+                for non_english_sub in non_english_subs:
+                    remove_from_list(csv_file, non_english_sub[2])
+                    
+                    if move_to_failed:
+                        add_to_failed_list(non_english_sub[2])
+                        time.sleep(0.5)
+                    
+                        print(f"Removed \"{non_english_sub[3]}\"-subtitle from list and added it to failed.txt!")
+                    
+                    elif move_to_failed == 'retry':
+                        add_to_retry_list(retry_file, *non_english_sub[1:10])
+                        print(f"Moved \"{non_english_sub[3]}\"-subtitle entry to logs/retry.csv!")
+                    else:
+                        add_to_csv_list(csv_file, *non_english_sub[1:10])
+                        
+                    subtitles.remove(non_english_sub)
+                    
+    if move_to_failed:
+        print("Does it work?")
+        data = "\n"
+        try:
+            with open(failed_file, 'a', encoding='utf-8') as f:
+                f.write(data)
+                
+            time.sleep(0.1)
+        except Exception as e:
+            print("ERROR: Something went wrong...")
+            print(f"\u2022Error: {str(e)}")
+        time.sleep(0.5)
 
 def remove_from_list(csv_file, sub_file):
     with open(csv_file, 'r') as file:
@@ -427,31 +462,99 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
         remove_from_list(csv_file, sub_file)
         time.sleep(1)
     else:
-        if SUBCLEANER:
+        lang_command = f"/usr/bin/python3 -u /opt/srt_lang_detect/srtlangdetect.py \"{sub_file}\""
+        if srt_lang_detect(lang_command, sub_file):
+            if SUBCLEANER:
                 print("Running subcleaner...")
                 subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py --language \"{sub_code2}\" \"{sub_file}\""
-                run_command(subcleaner_command, sub_file)
-        
-        if not english_sub_path:
-            print("Running subsync...")
-
-            subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --out \"{sub_file}\" --overwrite"
-            output, error, fail = run_command(subsync_command, sub_file)
-        
-            if fail:
-                print(f"Audio track language unknown, trying again with \"{ep_code3}\" as reference language...")
-                time.sleep(0.1)
+                run_command(subcleaner_command, sub_file, subcleaner_command)
+            
+            if not english_sub_path:
+                print("Running subsync...")
+    
+                subsync_command = f"/ur/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --out \"/dev/shm/tmp.srt\" --overwrite"
+                log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --out \"{sub_file}\" --overwrite"
+                output, error, fail = run_command(subsync_command, sub_file, log_command)
+            
+                if fail:
+                    print(f"Audio track language unknown, trying again with \"{ep_code3}\" as reference language...")
+                    time.sleep(0.1)
+                        
+                    subsync_command = f"/ur/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"/dev/shm/tmp.srt\" --overwrite"
+                    log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"{sub_file}\" --overwrite"
+                    output, error, fail = run_command(subsync_command, sub_file, log_command)        
+            else:
+                print("Running subsync for non-English subtitle...")
                 
-                subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"{sub_file}\" --overwrite"
-                output, error, fail = run_command(subsync_command, sub_file)        
+                subsync_command = f"/ur/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"300\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-stream-by-type \"sub\" --ref-lang \"eng\" --out \"/dev/shm/tmp.srt\" --overwrite"
+                log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"300\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-stream-by-type \"sub\" --ref-lang \"eng\" --out \"{sub_file}\" --overwrite"
+                output, error, fail = run_command(subsync_command, sub_file, log_command)
+                
+            if has_error(output + error, sub_file) == True:
+                print("ERROR: Something went wrong...")
+                blacklist_result = blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_code2, sub_file)
+                if blacklist_result == True:
+                    print("Successfully blacklisted subtitle, requesting new subtitle!")
+                    remove_from_list(csv_file, sub_file)
+                    new_subtitle = download_new_subtitle(is_movie, series_id, episode_id, sub_code2)
+                    if new_subtitle:
+                        print("Successfully downloaded new subtitle, adding to list!\n")
+                        
+                        find_non_english_counterpart(csv_file, reference_file, sub_file, False)
+                                
+                    else:
+                        print("No new subtitles found, removing from list...")
+                        add_to_retry_list(retry_file, reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id)
+                        remove_from_list(csv_file, sub_file)
+                        print("Moving subtitle entry to logs/retry.csv!")
+                        if sub_code2 == 'en':
+                            find_non_english_counterpart(csv_file, reference_file, sub_file, 'retry')
+                            print()
+                        else:
+                            print()
+                elif blacklist_result == 'remove':
+                    print("Subtitle not found, removing from list...\n")
+                    remove_from_list(csv_file, sub_file)
+                else:
+                    print("ERROR: Failed to blacklist subtitle...")
+                    add_to_retry_list(retry_file, reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id)
+                    remove_from_list(csv_file, sub_file)
+                    
+                    print("Moving subtitle entry to logs/retry.csv!")
+                    
+                    if sub_code2 == 'en':
+                        find_non_english_counterpart(csv_file, reference_file, sub_file, 'retry')
+                    print()
+                        
+            elif has_error(output + error, sub_file) == 'nosync':
+                print("Couldn't synchronize to media file...")
+                
+                add_to_failed_list(sub_file)
+                remove_from_list(csv_file, sub_file)
+                
+                if sub_code2 == 'en':
+                    print("Removed English subtitle from list and added it to failed.txt!")
+                else:
+                    print(f"Removed \"{sub_code2}\"-subtitle from list and added it to failed.txt!")
+                
+                find_non_english_counterpart(csv_file, reference_file, sub_file, True)
+                print()
+
+            else:
+                try:
+                    shutil.copy2('/dev/shm/tmp.srt', sub_file)
+                    print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!\n")
+                    remove_from_list(csv_file, sub_file)
+                except Exception as e:
+                    print("ERROR: Something went wrong...")
+                    print(f"\u2022Error: {str(e)}")
+                    if sub_code2 == 'en':
+                        remove_from_list(csv_file, sub_file)
+                        add_to_csv_list(csv_file, subtitle[1:10])
+                    else:
+                        find_non_english_counterpart(csv_file, reference_file, sub_file, False)                 
         else:
-            print("Running subsync for non-English subtitle...")
-            
-            subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"300\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-stream-by-type \"sub\" --ref-lang \"eng\" --out \"{sub_file}\" --overwrite"
-            output, error, fail = run_command(subsync_command, sub_file)
-            
-        if has_error(output + error, sub_file) == True:
-            print("ERROR: Something went wrong...")
+            print("ERROR: Wrong language detected in subtitle...")
             blacklist_result = blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_code2, sub_file)
             if blacklist_result == True:
                 print("Successfully blacklisted subtitle, requesting new subtitle!")
@@ -460,15 +563,16 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 if new_subtitle:
                     print("Successfully downloaded new subtitle, adding to list!\n")
                     
-                    find_non_english_counterpart(csv_file, reference_file, sub_file, False)           
+                    find_non_english_counterpart(csv_file, reference_file, sub_file, False)
+                            
                 else:
                     print("No new subtitles found, removing from list...")
                     add_to_retry_list(retry_file, reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id)
                     remove_from_list(csv_file, sub_file)
                     print("Moving subtitle entry to logs/retry.csv!")
                     if sub_code2 == 'en':
-                        find_non_english_counterpart(csv_file, reference_file, sub_file, True)
-                        print("Moving non-English subtitle entry to logs/retry.csv!\n")
+                        find_non_english_counterpart(csv_file, reference_file, sub_file, 'retry')
+                        print()
                     else:
                         print()
             elif blacklist_result == 'remove':
@@ -482,29 +586,9 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 print("Moving subtitle entry to logs/retry.csv!")
                 
                 if sub_code2 == 'en':
-                    find_non_english_counterpart(csv_file, reference_file, sub_file, False)
-                    print("Moving non-English subtitle entry to logs/retry.csv!")
+                    find_non_english_counterpart(csv_file, reference_file, sub_file, 'retry')
                 print()
-                    
-        elif has_error(output + error, sub_file) == 'nosync':
-            print("Couldn't synchronize to media file, adding to failed.txt...")
-            
-            add_to_failed_list(sub_file)
-            remove_from_list(csv_file, sub_file)
-            
-            if sub_code2 == "en":
-                print(f"Removed English-subtitle from list and added it to failed.txt!")
                 
-                find_non_english_counterpart(csv_file, reference_file, sub_file, True)
-                
-                print()
-            else:  
-                print(f"Removed \"{sub_code2}\"-subtitle from list and added it to failed.txt!\n")
-                
-        else:
-            print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!\n")
-            remove_from_list(csv_file, sub_file)
-
 if __name__ == "__main__":
     csv_file = '/subsync-bazarr/unsynced.csv'
     retry_file = '/subsync-bazarr/logs/retry.csv'
