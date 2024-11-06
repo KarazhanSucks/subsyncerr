@@ -29,6 +29,9 @@ def run_command(command, sub_file, log_command):
     cleaned_output = output.replace(sub_file, '').replace(filename, '')
     output = output.replace("/dev/shm/tmp.srt", sub_file)
     
+    if "can't open multimedia file: No such file or directory" in cleaned_output:
+        return output, error, 'extension'
+    
     if "Select reference language first" in cleaned_output:
         return output, error, True
     
@@ -292,7 +295,6 @@ def find_non_english_counterpart(csv_file, reference_file, sub_file, move_to_fai
                     subtitles.remove(non_english_sub)
                     
     if move_to_failed:
-        print("Does it work?")
         data = "\n"
         try:
             with open(failed_file, 'a', encoding='utf-8') as f:
@@ -481,13 +483,22 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --out \"{sub_file}\" --overwrite"
                 output, error, fail = run_command(subsync_command, sub_file, log_command)
             
-                if fail:
+                if fail == True:
                     print(f"Audio track language unknown, trying again with \"{ep_code3}\" as reference language...")
                     time.sleep(0.1)
                         
                     subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"/dev/shm/tmp.srt\" --overwrite"
                     log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{float(WINDOW_SIZE)}\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"{sub_file}\" --overwrite"
-                    output, error, fail = run_command(subsync_command, sub_file, log_command)        
+                    output, error, fail = run_command(subsync_command, sub_file, log_command)    
+                if fail == 'extension':
+                    print("ERROR: Can't open multimedia file: No such file or directory, moving to failed.txt...")
+                
+                    add_to_failed_list(sub_file)
+                    remove_from_list(csv_file, sub_file)
+                    find_non_english_counterpart(csv_file, reference_file, sub_file, True)
+                    print("Moved successfully, proceeding!!!\n")
+                    
+                    return False        
             else:
                 print("Running subsync for non-English subtitle...")
                 
