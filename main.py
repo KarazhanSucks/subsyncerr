@@ -281,10 +281,43 @@ def find_non_english_counterpart(csv_file, reference_file, sub_file, move_to_fai
                     remove_from_list(csv_file, non_english_sub[2])
                     
                     if move_to_failed:
-                        add_to_failed_list(non_english_sub[2])
-                        time.sleep(0.5)
+                        lang_command = f"/usr/bin/python3 -u /opt/srt-lang-detect/srtlangdetect.py \"{non_english_sub[2]}\""
+                        if srt_lang_detect(lang_command, non_english_sub[2]):
+                            if SUBCLEANER:
+                                print(f"Running subcleaner for \"{non_english_sub[3]}\"-subtitle...")
+                                subcleaner_command = f"/usr/bin/python3 -u /opt/subcleaner/subcleaner.py --language \"{non_english_sub[3]}\" \"{non_english_sub[2]}\""
+                                run_command(subcleaner_command, non_english_sub[2], subcleaner_command)
+                        
+                            add_to_failed_list(non_english_sub[2])
+                            time.sleep(0.5)
+                        
+                            print(f"Removed \"{non_english_sub[3]}\"-subtitle from list and added it to failed.txt!")
                     
-                        print(f"Removed \"{non_english_sub[3]}\"-subtitle from list and added it to failed.txt!")
+                        else:
+                            print(f"ERROR: Wrong language detected in \"{non_english_sub[3]}\"-subtitle...")
+                            is_movie = non_english_sub[8] == ""
+                            blacklist_result = blacklist_subtitle(is_movie, non_english_sub[8], non_english_sub[9], non_english_sub[7], non_english_sub[6], non_english_sub[3], non_english_sub[2])
+                            if blacklist_result == True:
+                                print("Successfully blacklisted subtitle, requesting new subtitle!")
+                                remove_from_list(csv_file, non_english_sub[2])
+                                new_subtitle = download_new_subtitle(is_movie, non_english_sub[8], non_english_sub[9], non_english_sub[3])
+                                if new_subtitle:
+                                    print()
+                                    find_non_english_counterpart(csv_file, non_english_sub[1], non_english_sub[2], False)
+                                else:
+                                    print("No new subtitles found, removing from list...")
+                                    add_to_retry_list(retry_file, non_english_sub[1], non_english_sub[2], non_english_sub[3], non_english_sub[4], non_english_sub[5], non_english_sub[6], non_english_sub[7], non_english_sub[8], non_english_sub[9])
+                                    remove_from_list(csv_file, non_english_sub[2])
+                                    print("Moving subtitle entry to logs/retry.csv!\n")
+                            elif blacklist_result == 'remove':
+                                print("Subtitle not found, removing from list...\n")
+                                remove_from_list(csv_file, non_english_sub[2])
+                            else:
+                                print("ERROR: Failed to blacklist subtitle...")
+                                add_to_retry_list(retry_file, non_english_sub[1], non_english_sub[2], non_english_sub[3], non_english_sub[4], non_english_sub[5], non_english_sub[6], non_english_sub[7], non_english_sub[8], non_english_sub[9])
+                                remove_from_list(csv_file, non_english_sub[2])
+                                
+                                print("Moving subtitle entry to logs/retry.csv!\n")
                     
                     elif move_to_failed == 'retry':
                         add_to_retry_list(retry_file, *non_english_sub[1:10])
