@@ -573,7 +573,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                             find_non_english_counterpart(csv_file, subtitle[1:10], 'retry')
                         print()
                             
-                elif has_error(output, sub_file)[0] == 'nosync':
+                elif has_error(output, sub_file)[0] == 'nosync' or has_error(output, sub_file) == 'nosync':
                     print("Couldn't synchronize to media file...")
                     
                     if has_error(output, sub_file)[1] == 'missmodel':
