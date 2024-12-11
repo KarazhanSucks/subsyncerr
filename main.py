@@ -17,24 +17,35 @@ WINDOW_SIZE = os.getenv("WINDOW_SIZE", "1800")
 
 def run_command(command, sub_file):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    timeout_value = int(WINDOW_SIZE) * 2.5
     
-    raw_output = process.communicate()
-    
-    output = raw_output[0].decode('utf-8')
-    
-    filename = extract_filename(sub_file)
-    
-    # Remove the filename from the output
-    cleaned_output = output.replace(sub_file, '').replace(filename, '')
-    output = output.replace("/dev/shm/tmp.srt", sub_file)
-    
-    if "can't open multimedia file: No such file or directory" in cleaned_output:
-        return output, 'extension'
-    
-    if "Select reference language first" in cleaned_output:
-        return output, True
+    try:
+        raw_output = process.communicate(timeout=timeout_value)
+        output = raw_output[0].decode('utf-8')
+        
+        filename = extract_filename(sub_file)
+        cleaned_output = output.replace(sub_file, '').replace(filename, '')
+        output = output.replace("/dev/shm/tmp.srt", sub_file)
+        
+        if "can't open multimedia file: No such file or directory" in cleaned_output:
+            return output, 'extension'
+        
+        if "Select reference language first" in cleaned_output:
+            return output, True
 
-    return output, False
+        return output, False
+
+    except subprocess.TimeoutExpired:       
+        output = f"Subsync exceeded Window-Size and set timeout of {timeout_value} seconds, blacklisted and requested new subtitle."
+        
+        process.terminate()
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            process.kill()
+        
+        return output, False
+            
 
 def log_output(sub_file, command, output, reason):
     if 'subsync' in command:
@@ -142,6 +153,8 @@ def has_error(output, sub_file):
         return True
     elif "recognition model is missing" in cleaned_output:
         return 'nosync', 'missmodel'
+    elif "Subsync exceeded Window-Size" in cleaned_output:
+        return "timeout"
     else:
         return None
     
@@ -591,6 +604,28 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                     
                     find_non_english_counterpart(csv_file, subtitle[1:10], True)
                     print()
+                    
+                elif has_error(output, sub_file) == 'timeout':
+                    print("ERROR: Subsync exceeded Window-Size and set timeout, terminating...")
+                    log_output(sub_file, log_command, output, "timeout exceeded.")
+                    blacklist_result = blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_code2, sub_file)
+                    if blacklist_result == True:
+                        print("Successfully blacklisted subtitle, requesting new subtitle!\n")
+                        remove_from_list(csv_file, sub_id)
+                        find_non_english_counterpart(csv_file, subtitle[1:10], False)      
+                    elif blacklist_result == 'remove':
+                        print("Subtitle not found, removing from list...\n")
+                        remove_from_list(csv_file, sub_id)
+                    else:
+                        print("ERROR: Failed to blacklist subtitle...")
+                        add_to_retry_list(retry_file, reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id)
+                        remove_from_list(csv_file, sub_id)
+                        
+                        print("Moving subtitle entry to logs/retry.csv!")
+                        
+                        if sub_code2 == 'en':
+                            find_non_english_counterpart(csv_file, subtitle[1:10], 'retry')
+                        print()
             else:
                 try:
                     log_output(sub_file, log_command, output, False)
