@@ -4,6 +4,7 @@ import time
 import subprocess
 import shutil
 import requests
+import stat
 import re
 from datetime import datetime
 
@@ -135,12 +136,14 @@ def create_csv_file(csv_file):
     with open(csv_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'episode_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
+    os.chmod(csv_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
     
 def create_retry_file(retry_file):
     os.makedirs(os.path.dirname(retry_file), exist_ok=True)
     with open(retry_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'episode_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
+    os.chmod(csv_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
 
 def has_error(output, sub_file):
     filename = extract_filename(sub_file)
@@ -186,9 +189,7 @@ def add_to_csv_list(csv_file, reference_file, sub_file, sub_code2, sub_code3, ep
 
     try:
         if not os.path.isfile(csv_file):
-            with open(csv_file, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'episode_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
+            create_csv_file(csv_file)
 
         with open(csv_file, 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
@@ -214,10 +215,8 @@ def add_to_retry_list(retry_file, reference_file, sub_file, sub_code2, sub_code3
 
     try:
         if not os.path.isfile(retry_file):
-            with open(retry_file, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'episode_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
-
+            create_retry_file(retry_file)
+            
         with open(retry_file, 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(data)
