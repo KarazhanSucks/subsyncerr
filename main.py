@@ -150,16 +150,19 @@ def has_error(output, sub_file):
     
     cleaned_output = output.replace(sub_file, '').replace(filename, '')
     
-    if "couldn't synchronize!" in cleaned_output:
-        if "progress 100%, 0 points" in cleaned_output:
-            return 'nosync'
-        return True
-    elif "recognition model is missing" in cleaned_output:
-        return 'nosync', 'missmodel'
-    elif "Subsync exceeded Window-Size" in cleaned_output:
-        return "timeout"
-    else:
+    if "done, saved to" in cleaned_output:
         return None
+    else:
+        if "couldn't synchronize!" in cleaned_output:
+            if "progress 100%, 0 points" in cleaned_output:
+                return 'nosync'
+            return True
+        elif "recognition model is missing" in cleaned_output or "Select reference language first" in cleaned_output:
+            return 'nosync', 'missmodel'
+        elif "Subsync exceeded Window-Size" in cleaned_output:
+            return "timeout"
+        else:
+            return 'nosync', 'unknown'
     
 def add_to_failed_list(sub_file):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -552,7 +555,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                         
                     subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(eng_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"/dev/shm/tmp.srt\" --overwrite"
                     log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(eng_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"{sub_file}\" --overwrite"
-                    output, fail = run_command(subsync_command, sub_file)    
+                    output, fail = run_command(subsync_command, sub_file)
                 if fail == 'extension':
                     print("ERROR: Can't open multimedia file: No such file or directory, moving to failed.txt...")
                 
@@ -607,6 +610,8 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                     
                     if has_error(output, sub_file)[1] == 'missmodel':
                         log_output(sub_file, log_command, output, "recognition model is missing")
+                    elif has_error(output, sub_file)[1] == 'unknown':
+                        log_output(sub_file, log_command, output, "unknown error")
                     else:
                         log_output(sub_file, log_command, output, "progress 100%, 0 points")
                     
