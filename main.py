@@ -160,7 +160,7 @@ def has_error(output, sub_file):
         elif "recognition model is missing" in cleaned_output or "Select reference language first" in cleaned_output:
             return 'nosync', 'missmodel'
         elif "Subsync exceeded Window-Size" in cleaned_output:
-            return "timeout"
+            return 'nosync', 'timeout'
         else:
             return 'nosync', 'unknown'
     
@@ -417,33 +417,36 @@ def process_subtitles(csv_file, retry_file):
             subtitles = list(reader)
             
         if not subtitles:  
+            run_once = True
+            
             while True:  
-                with open(retry_file, 'r') as file:
-                    reader = csv.reader(file)
-                    next(reader) 
-                    retry_list = list(reader)
+                # start of retry-section
+                if run_once == True:
+                    with open(retry_file, 'r') as file:
+                        reader = csv.reader(file)
+                        next(reader) 
+                        r_subtitle = list(reader)
+                    run_once = False
                     
-                if not retry_list:
+                if not r_subtitle:
                     break
                 
                 print()
-                
-                subtitle = retry_list[0]
                              
-                current_count = len(retry_list)
+                current_count = len(r_subtitle)
                 processed_count += 1
                 
-                english_sub_path = replace_language_code(subtitle[2], False)
-                english_subtitle = next((sub for sub in retry_list if sub[2] == english_sub_path), None)
+                subtitle = r_subtitle[0]
                 
-                if subtitle[3] != 'en':
-                    if english_subtitle:
-                         subtitle[1:10] = english_subtitle[1:10]
+                english_sub_path = replace_language_code(subtitle[2], False)
+                english_subtitle = next((sub for sub in r_subtitle if sub[2] == english_sub_path), None)
                 
                 timestamp = datetime.now().strftime('%H:%M:%S')
                 print(f"[{timestamp}] Processed: {processed_count}, Remaining: {current_count}")
                 time.sleep(0.1)
                 print(f"Processing subtitle: {subtitle[2]}")
+                time.sleep(0.1)
+                print("Attempting to blacklist subtitle...")
                 time.sleep(0.1)
                 
                 blacklist_result = blacklist_subtitle(subtitle[8] == "", subtitle[8], subtitle[9], subtitle[7], subtitle[6], subtitle[3], subtitle[2])
@@ -452,27 +455,33 @@ def process_subtitles(csv_file, retry_file):
                     
                     remove_from_retry_list(retry_file, subtitle[6])
                     
-                    non_english_subs = [sub for sub in retry_list if sub[1] == subtitle[1] and sub[3] != 'en']
+                    non_english_subs = [sub for sub in r_subtitle if sub[1] == subtitle[1] and sub[3] != 'en']
                     for non_english_sub in non_english_subs:
                         remove_from_retry_list(retry_file, non_english_sub[6])
                         print(f"Moving \"{non_english_sub[3]}\"-subtitle entry back to unsynced.csv!")
                         with open(csv_file, 'a', newline='') as file:
                             writer = csv.writer(file)
                             writer.writerow(non_english_sub)
+                    run_once = True
                     print()
                         
                 elif blacklist_result == 'remove':
                     print("Subtitle not found, removing from logs/retry.csv...")
                     remove_from_retry_list(retry_file, subtitle[6])
-                    non_english_subs = [sub for sub in retry_list if sub[1] == subtitle[1] and sub[3] != 'en']
+                    non_english_subs = [sub for sub in r_subtitle if sub[1] == subtitle[1] and sub[3] != 'en']
                     for non_english_sub in non_english_subs:
                         remove_from_retry_list(retry_file, non_english_sub[6])
                         print(f"Removing \"{non_english_sub[3]}\"-subtitle from logs/retry.csv...")
+                    run_once = True
                     print()
                 else:
+                    r_subtitle.pop(0)
+                    
+                    time.sleep(2)
                     print("ERROR: Failed to blacklist subtitle, keeping in logs/retry.csv...\n")
                     
                 time.sleep(0.1)
+                # end of retry-section
             
             with open(csv_file, 'r') as file:
                 reader = csv.reader(file)
@@ -612,6 +621,9 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                         log_output(sub_file, log_command, output, "recognition model is missing")
                     elif has_error(output, sub_file)[1] == 'unknown':
                         log_output(sub_file, log_command, output, "unknown error")
+                    elif has_error(output, sub_file)[1] == 'timeout':
+                        print("ERROR: Subsync exceeded Window-Size and set timeout, terminating...")
+                        log_output(sub_file, log_command, output, "timeout exceeded")
                     else:
                         log_output(sub_file, log_command, output, "progress 100%, 0 points")
                     
@@ -625,28 +637,6 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                     
                     find_non_english_counterpart(csv_file, subtitle[1:10], True)
                     print()
-                    
-                elif has_error(output, sub_file) == 'timeout':
-                    print("ERROR: Subsync exceeded Window-Size and set timeout, terminating...")
-                    log_output(sub_file, log_command, output, "timeout exceeded.")
-                    blacklist_result = blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_code2, sub_file)
-                    if blacklist_result == True:
-                        print("Successfully blacklisted subtitle, requesting new subtitle!\n")
-                        remove_from_list(csv_file, sub_id)
-                        find_non_english_counterpart(csv_file, subtitle[1:10], False)      
-                    elif blacklist_result == 'remove':
-                        print("Subtitle not found, removing from list...\n")
-                        remove_from_list(csv_file, sub_id)
-                    else:
-                        print("ERROR: Failed to blacklist subtitle...")
-                        add_to_retry_list(retry_file, reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id)
-                        remove_from_list(csv_file, sub_id)
-                        
-                        print("Moving subtitle entry to logs/retry.csv!")
-                        
-                        if sub_code2 == 'en':
-                            find_non_english_counterpart(csv_file, subtitle[1:10], 'retry')
-                        print()
             else:
                 try:
                     log_output(sub_file, log_command, output, False)
