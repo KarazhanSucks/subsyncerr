@@ -37,7 +37,7 @@ def run_command(command, sub_file):
         return output, False
 
     except subprocess.TimeoutExpired:       
-        output = f"Subsync exceeded Window-Size and set timeout of {timeout_value} seconds, blacklisted and requested new subtitle."
+        output = f"Subsync exceeded Window-Size and set timeout of {timeout_value} seconds, adding to failed.txt."
         
         process.terminate()
         try:

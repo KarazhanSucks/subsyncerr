@@ -2,7 +2,6 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
-ENV TZ=Europe/London
 
 # Update package list and install dependencies
 RUN apt-get -y update && \
