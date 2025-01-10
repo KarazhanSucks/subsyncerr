@@ -83,7 +83,7 @@ def list_metadata(is_movie):
         response_body = response.json()
         paths = [item["path"] for item in response_body["data"]]
         
-        for path in paths:  # for loop is whatever length the iterations-variable for the length from the bazarr-api is
+        for path in paths:  # paths is whatever length the iterations-variable for the length from the bazarr-api is
             if os.path.exists(path):
                 break
             
@@ -98,8 +98,44 @@ def list_metadata(is_movie):
     except requests.RequestException as e:
         print(f"\u2022ERROR, API-request failed: {str(e)}")
         return False
+    
+def bazarr_path():
+    url = f"{main.BAZARR_URL}/api/files?path=%2Fsubsync-bazarr"
+    
+    headers = {
+        "X-API-KEY": f"{main.API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    if os.path.isdir(HOST_SCRIPTS_DIR):
+        os.makedirs(os.path.join(HOST_SCRIPTS_DIR, 'logs'), exist_ok=True)
+    else:
+        return False
+    
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code not in [200]:
+            response.raise_for_status()
+            
+        time.sleep(1)
+            
+        response_body = response.json()
+            
+        if response_body == []:
+            return False
+            
+        return True
+    except requests.RequestException as e:
+        print(f"\u2022ERROR, API-request failed: {str(e)}")
+        return False
+    
+if DEBUG:
+    while True:
+        print("Debug environment-variable detected, not running main.py!")
+        time.sleep(1800)
+        print()
 
-if os.path.isdir(HOST_SCRIPTS_DIR):
+if bazarr_path():
     if bazarr_status():
         print("Bazarr connection successful!!!")
         time.sleep(0.1)
@@ -113,12 +149,6 @@ if os.path.isdir(HOST_SCRIPTS_DIR):
                 if os.path.isfile(os.path.join(HOST_SCRIPTS_DIR, FILE)):
                     print("Scripts are in place, initializing program!!!\n")
                     time.sleep(0.1)
-                    
-                    if DEBUG:
-                        while True:
-                            print("Debug environment-variable detected, not running main.py!")
-                            time.sleep(1800)
-                            print()
 
                     # Run the Python script and tee the output
                     with open("mainlog", "w") as log_file:

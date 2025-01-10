@@ -1,6 +1,7 @@
 import os
 import csv
 import time
+import ffmpeg
 import subprocess
 import shutil
 import requests
@@ -143,7 +144,7 @@ def create_retry_file(retry_file):
     with open(retry_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'episode_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
-    os.chmod(csv_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+    os.chmod(retry_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
 
 def has_error(output, sub_file):
     filename = extract_filename(sub_file)
@@ -169,6 +170,8 @@ def add_to_failed_list(sub_file):
     data = f"{timestamp}: {sub_file}\n"
 
     try:
+        if (not os.access(failed_file, os.R_OK)) or (not os.access(failed_file, os.W_OK)):
+            os.chmod(failed_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
         with open(failed_file, 'a', encoding='utf-8') as f:
             f.write(data)
             
@@ -193,7 +196,9 @@ def add_to_csv_list(csv_file, reference_file, sub_file, sub_code2, sub_code3, ep
     try:
         if not os.path.isfile(csv_file):
             create_csv_file(csv_file)
-
+        
+        if (not os.access(csv_file, os.R_OK)) or (not os.access(csv_file, os.W_OK)):   
+            os.chmod(csv_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
         with open(csv_file, 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(data)
@@ -219,7 +224,9 @@ def add_to_retry_list(retry_file, reference_file, sub_file, sub_code2, sub_code3
     try:
         if not os.path.isfile(retry_file):
             create_retry_file(retry_file)
-            
+         
+        if (not os.access(retry_file, os.R_OK)) or (not os.access(retry_file, os.W_OK)):    
+            os.chmod(retry_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)    
         with open(retry_file, 'a', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(data)
@@ -358,9 +365,6 @@ def find_non_english_counterpart(csv_file, original_subtitle, move_to_failed):
                                     remove_from_list(csv_file, non_english_sub[6])
                                     
                                     print("Moving subtitle entry to logs/retry.csv!\n")                                
-                        elif move_to_failed == 'retry':
-                            add_to_retry_list(retry_file, *non_english_sub[1:10])
-                            print(f"Moved \"{non_english_sub[3]}\"-subtitle entry to logs/retry.csv!")
                         else:
                             add_to_csv_list(csv_file, *non_english_sub[1:10])
                             
@@ -369,6 +373,8 @@ def find_non_english_counterpart(csv_file, original_subtitle, move_to_failed):
     if move_to_failed == True:
         data = "\n"
         try:
+            if (not os.access(failed_file, os.R_OK)) or (not os.access(failed_file, os.W_OK)):
+                os.chmod(failed_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
             with open(failed_file, 'a', encoding='utf-8') as f:
                 f.write(data)
                 
@@ -378,6 +384,8 @@ def find_non_english_counterpart(csv_file, original_subtitle, move_to_failed):
         time.sleep(0.5)
 
 def remove_from_list(csv_file, sub_id):
+    if (not os.access(csv_file, os.R_OK)) or (not os.access(csv_file, os.W_OK)):
+        os.chmod(csv_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
     with open(csv_file, 'r') as file:
         reader = csv.reader(file)
         subtitles = list(reader)
@@ -393,6 +401,8 @@ def remove_from_list(csv_file, sub_id):
     time.sleep(0.5)
     
 def remove_from_retry_list(retry_file, sub_id):
+    if (not os.access(retry_file, os.R_OK)) or (not os.access(retry_file, os.W_OK)):
+        os.chmod(retry_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
     with open(retry_file, 'r') as file:
         reader = csv.reader(file)
         retry_list = list(reader)
@@ -406,6 +416,20 @@ def remove_from_retry_list(retry_file, sub_id):
         writer.writerows(retry_list)
         
     time.sleep(0.5)
+    
+def reference_length(reference_file):
+    if not os.path.isfile(reference_file):
+        return False
+    
+    probe = ffmpeg.probe(reference_file)
+    duration = float(probe['format']['duration'])
+    
+    if duration > 1800:
+        if duration > 4320:
+            return "movie"
+        return "short"
+    else:
+        return "tv"
     
 def process_subtitles(csv_file, retry_file):
     processed_count = 0 
@@ -459,6 +483,8 @@ def process_subtitles(csv_file, retry_file):
                     for non_english_sub in non_english_subs:
                         remove_from_retry_list(retry_file, non_english_sub[6])
                         print(f"Moving \"{non_english_sub[3]}\"-subtitle entry back to unsynced.csv!")
+                        if (not os.access(csv_file, os.R_OK)) or (not os.access(csv_file, os.W_OK)):
+                            os.chmod(csv_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
                         with open(csv_file, 'a', newline='') as file:
                             writer = csv.writer(file)
                             writer.writerow(non_english_sub)
@@ -544,12 +570,17 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 output, fail = run_command(subcleaner_command, sub_file)
                 log_output(sub_file, subcleaner_command, output, False)
                 
-            eng_points = 60
-            non_eng_points = 160
-                
-            if not is_movie:
+            length = reference_length(reference_file)
+            
+            if length == "tv":
                 eng_points = 40
                 non_eng_points = 50
+            elif length == "short":
+                eng_points = 50
+                non_eng_points = 120
+            else: #movie
+                eng_points = 60
+                non_eng_points = 160
             
             if not english_sub_path:
                 print("Running subsync...")
@@ -566,12 +597,14 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                     log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(eng_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"{sub_file}\" --overwrite"
                     output, fail = run_command(subsync_command, sub_file)
                 if fail == 'extension':
-                    print("ERROR: Can't open multimedia file: No such file or directory, moving to failed.txt...")
-                
+                    print("ERROR: Can't open multimedia file: No such file or directory, adding to failed.txt...")
+                    
+                    log_output(sub_file, log_command, output, "no such file or directory")     
+                           
                     add_to_failed_list(sub_file)
                     remove_from_list(csv_file, sub_id)
                     find_non_english_counterpart(csv_file, subtitle[1:10], True)
-                    print("Moved successfully, proceeding!!!\n")
+                    print("Added successfully, proceeding!!!\n")
                     
                     return False        
             else:
@@ -582,12 +615,12 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 output, fail = run_command(subsync_command, sub_file)
                 
                 if fail == 'extension':
-                        print("ERROR: Can't open multimedia file: No such file or directory, moving to failed.txt...")
+                        print("ERROR: Can't open multimedia file: No such file or directory, adding to failed.txt...")
                     
                         add_to_failed_list(sub_file)
                         remove_from_list(csv_file, sub_id)
                         find_non_english_counterpart(csv_file, subtitle[1:10], True)
-                        print("Moved successfully, proceeding!!!\n")
+                        print("Added successfully, proceeding!!!\n")
                         
                         return False   
                 
@@ -611,7 +644,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                         print("Moving subtitle entry to logs/retry.csv!")
                         
                         if sub_code2 == 'en':
-                            find_non_english_counterpart(csv_file, subtitle[1:10], 'retry')
+                            find_non_english_counterpart(csv_file, subtitle[1:10], False)
                         print()
                             
                 elif has_error(output, sub_file)[0] == 'nosync' or has_error(output, sub_file) == 'nosync':
@@ -638,28 +671,33 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                     find_non_english_counterpart(csv_file, subtitle[1:10], True)
                     print()
             else:
-                try:
-                    log_output(sub_file, log_command, output, False)
-                    
-                    shutil.copy2('/dev/shm/tmp.srt', sub_file)
-                    if sub_code2 == 'en':
-                        print("Successfully synced English subtitle, removing from list!")
-                    else:
-                        print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!")
-                        
+                if not os.path.isfile(sub_file):
+                    print("Subtitle not found in path, removing from list!\n")
                     remove_from_list(csv_file, sub_id)
-                    
-                    if sub_code2 == 'en':
-                        find_non_english_counterpart(csv_file, subtitle[1:10], 'doprocess')
-                    print()
+                    time.sleep(1)
+                else:
+                    try:
+                        log_output(sub_file, log_command, output, False)
                         
-                except Exception as e:
-                    print(f"\u2022ERROR: {str(e)}")
-                    if sub_code2 == 'en':
+                        shutil.copy2('/dev/shm/tmp.srt', sub_file)
+                        if sub_code2 == 'en':
+                            print("Successfully synced English subtitle, removing from list!")
+                        else:
+                            print(f"Successfully synced \"{sub_code2}\"-subtitle, removing from list!")
+                            
                         remove_from_list(csv_file, sub_id)
-                        add_to_csv_list(csv_file, *subtitle[1:10])
-                    else:
-                        find_non_english_counterpart(csv_file, subtitle[1:10], False)                 
+                        
+                        if sub_code2 == 'en':
+                            find_non_english_counterpart(csv_file, subtitle[1:10], 'doprocess')
+                        print()
+                            
+                    except Exception as e:
+                        print(f"\u2022ERROR: {str(e)}")
+                        if sub_code2 == 'en':
+                            remove_from_list(csv_file, sub_id)
+                            add_to_csv_list(csv_file, *subtitle[1:10])
+                        else:
+                            find_non_english_counterpart(csv_file, subtitle[1:10], False)                 
         else:
             print("ERROR: Wrong language detected in subtitle...")
             blacklist_result = blacklist_subtitle(is_movie, series_id, episode_id, provider, sub_id, sub_code2, sub_file)
@@ -678,7 +716,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 print("Moving subtitle entry to logs/retry.csv!")
                 
                 if sub_code2 == 'en':
-                    find_non_english_counterpart(csv_file, subtitle[1:10], 'retry')
+                    find_non_english_counterpart(csv_file, subtitle[1:10], False)
                 print()
                 
 if __name__ == "__main__":
