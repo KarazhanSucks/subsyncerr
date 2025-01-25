@@ -18,7 +18,7 @@ spec = importlib.util.spec_from_file_location("main", os.path.join(CONTAINER_SCR
 main = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(main)
 
-print("Welcome to Tarzoq's \"subsync-bazarr\", please visit the repository on GitHub if you encounter any issues: https://github.com/tarzoq/subsync-bazarr\n")
+print("Welcome to Tarzoq's \"subsync-bazarr\", please check out the repository on GitHub if you encounter any issues: https://github.com/Tarzoq/subsync-bazarr\n")
 
 time.sleep(1)
 
@@ -30,7 +30,7 @@ print(f"WINDOW_SIZE: {main.WINDOW_SIZE}\n")
 
 time.sleep(1)
 
-print("REMINDER: CPU-pinning for this container is highly recommended, subsync WILL hog all it can!\n")
+print("REMINDER: CPU-pinning for this container is highly recommended, subsync WILL hog all resources it can get!\n")
 
 def bazarr_status(max_retries=5, delay=10):
     url = f"{main.BAZARR_URL}/api/system/status"
@@ -147,7 +147,7 @@ if bazarr_path():
                 os.chmod(os.path.join(HOST_SCRIPTS_DIR, FILE), 0o755)  # This is equivalent to chmod +x
                 
                 if os.path.isfile(os.path.join(HOST_SCRIPTS_DIR, FILE)):
-                    print("Scripts are in place, initializing program!!!\n")
+                    print("Files are in place, initializing script!!!\n")
                     time.sleep(0.1)
 
                     # Run the Python script and tee the output
@@ -170,6 +170,6 @@ if bazarr_path():
         else:
             print("\nERROR: Make sure this container and Bazarr share the same media path allocations + that they have read and write permissions...")
     else:
-        print("\nERROR: Bazarr connection unsuccessful, please check the containers following environment variables: \"BAZARR_URL\" & \"API_KEY\"...")
+        print("\nERROR: Bazarr connection unsuccessful, please check the containers following environment variables: \"API_KEY\" & \"BAZARR_URL\"...")
 else:
     print(f"\nERROR: Make sure this container and Bazarr has the container-path \"{HOST_SCRIPTS_DIR}\" allocated...")
