@@ -24,8 +24,8 @@ time.sleep(1)
 
 print(f"API_KEY: {main.API_KEY}")
 print(f"BAZARR_URL: {main.BAZARR_URL}")
-print(f"SUBCLEANER: {main.SUBCLEANER}")
 print(f"SLEEP: {main.SLEEP}")
+print(f"SUBCLEANER: {main.SUBCLEANER}")
 print(f"WINDOW_SIZE: {main.WINDOW_SIZE}\n")
 
 time.sleep(1)

@@ -13,8 +13,8 @@ os.environ["PYTHONUNBUFFERED"] = "1"
 
 API_KEY = os.getenv("API_KEY", "None")
 BAZARR_URL = os.getenv("BAZARR_URL", "http://localhost:6767")
-SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
 SLEEP = os.getenv("SLEEP", "300")
+SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
 WINDOW_SIZE = os.getenv("WINDOW_SIZE", "1800")
 
 def run_command(command, sub_file):
@@ -35,7 +35,7 @@ def run_command(command, sub_file):
         if "Select reference language first" in cleaned_output:
             return output, True
 
-        return output, False
+        return output, None
 
     except subprocess.TimeoutExpired:       
         output = f"Subsync exceeded Window-Size and set timeout of {timeout_value} seconds, adding to failed.txt."
@@ -46,9 +46,11 @@ def run_command(command, sub_file):
         except subprocess.TimeoutExpired:
             process.kill()
         
-        return output, False
+        return output, None
+    
+    except Exception as e:
+        return f"Error running command: {str(e)}", 'error'
             
-
 def log_output(sub_file, command, output, reason):
     if 'subsync' in command:
         log_folder = '/subsync-bazarr/logs/subsync'
@@ -596,15 +598,18 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                     subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(eng_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"/dev/shm/tmp.srt\" --overwrite"
                     log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(eng_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"{sub_file}\" --overwrite"
                     output, fail = run_command(subsync_command, sub_file)
-                if fail == 'extension':
-                    print("ERROR: Can't open multimedia file: No such file or directory, adding to failed.txt...")
-                    
-                    log_output(sub_file, log_command, output, "no such file or directory")     
-                           
+                elif fail is not None:
+                    if fail == "extension":
+                        print("ERROR: No such file or directory, adding to failed.txt...")
+                        log_output(sub_file, log_command, output, "no such file or directory") 
+                    elif fail == "error":
+                        print("ERROR: The run_command function encoutered an error, adding to failed.txt...")
+                        log_output(sub_file, log_command, output, "The run_command function encountered an error")
+            
                     add_to_failed_list(sub_file)
                     remove_from_list(csv_file, sub_id)
                     find_non_english_counterpart(csv_file, subtitle[1:10], True)
-                    print("Added successfully, proceeding!!!\n")
+                    print()
                     
                     return False        
             else:
@@ -614,15 +619,20 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"300\" --min-points-no \"{int(non_eng_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{english_sub_path}\" --ref-stream-by-type \"sub\" --ref-lang \"eng\" --out \"{sub_file}\" --overwrite"
                 output, fail = run_command(subsync_command, sub_file)
                 
-                if fail == 'extension':
-                        print("ERROR: Can't open multimedia file: No such file or directory, adding to failed.txt...")
+                if fail is not None:
+                    if fail == "extension":
+                        print("ERROR: No such file or directory, adding to failed.txt...")
+                        log_output(sub_file, log_command, output, "no such file or directory") 
+                    elif fail == "error":
+                        print("ERROR: The run_command function encoutered an error, adding to failed.txt...")
+                        log_output(sub_file, log_command, output, "The run_command function encountered an error")
+            
+                    add_to_failed_list(sub_file)
+                    remove_from_list(csv_file, sub_id)
+                    find_non_english_counterpart(csv_file, subtitle[1:10], True)
+                    print()
                     
-                        add_to_failed_list(sub_file)
-                        remove_from_list(csv_file, sub_id)
-                        find_non_english_counterpart(csv_file, subtitle[1:10], True)
-                        print("Added successfully, proceeding!!!\n")
-                        
-                        return False   
+                    return False  
                 
             if has_error(output, sub_file) is not None:    
                 if has_error(output, sub_file) == True:
@@ -652,11 +662,11 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                     
                     if has_error(output, sub_file)[1] == 'missmodel':
                         log_output(sub_file, log_command, output, "recognition model is missing")
-                    elif has_error(output, sub_file)[1] == 'unknown':
-                        log_output(sub_file, log_command, output, "unknown error")
                     elif has_error(output, sub_file)[1] == 'timeout':
                         print("ERROR: Subsync exceeded Window-Size and set timeout, terminating...")
                         log_output(sub_file, log_command, output, "timeout exceeded")
+                    elif has_error(output, sub_file)[1] == 'unknown':
+                        log_output(sub_file, log_command, output, "unknown error")
                     else:
                         log_output(sub_file, log_command, output, "progress 100%, 0 points")
                     
