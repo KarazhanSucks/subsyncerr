@@ -42,11 +42,11 @@ RUN mkdir "/opt/subsync" && cd "/opt/subsync" && \
     cp subsync/config.py.template subsync/config.py && \
     pip3 install --no-cache-dir -r requirements.txt && \
     pip3 install --no-cache-dir . && \
-    mkdir "/opt/subsync-bazarr" && cd "/opt/subsync-bazarr" && \
-    # subsync-bazarr
-    git clone https://github.com/Tarzoq/subsync-bazarr.git . && \
+    mkdir "/opt/subsyncerr" && cd "/opt/subsyncerr" && \
+    # subsyncerr
+    git clone https://github.com/Tarzoq/subsyncerr.git . && \
     pip install --no-cache-dir -r requirements.txt && \
-    chmod +x /opt/subsync-bazarr/start.py && \
+    chmod +x /opt/subsyncerr/start.py && \
     mkdir "/opt/srt-lang-detect" && cd "/opt/srt-lang-detect" && \
     # srt-lang-detect
     git clone https://github.com/mdcollins05/srt-lang-detect.git . && \
@@ -60,4 +60,4 @@ RUN mkdir "/opt/subsync" && cd "/opt/subsync" && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 WORKDIR /working
-CMD ["python3", "-u", "/opt/subsync-bazarr/start.py"]
+CMD ["python3", "-u", "/opt/subsyncerr/start.py"]

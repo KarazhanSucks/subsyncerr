@@ -6,7 +6,7 @@ if [ ! -x "$0" ]; then
     exit 1
 fi
 
-CSV_FILE="/subsync-bazarr/unsynced.csv"
+CSV_FILE="/subsyncerr/unsynced.csv"
 
 REFERENCE_FILE="$1"
 SUB_FILE="$2"

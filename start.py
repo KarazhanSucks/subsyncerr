@@ -7,8 +7,8 @@ import importlib.util
 
 os.environ["PYTHONUNBUFFERED"] = "1"
 
-HOST_SCRIPTS_DIR = "/subsync-bazarr"
-CONTAINER_SCRIPTS_DIR = "/opt/subsync-bazarr"
+HOST_SCRIPTS_DIR = "/subsyncerr"
+CONTAINER_SCRIPTS_DIR = "/opt/subsyncerr"
 FILE = "addtosynclist.bash"
 
 DEBUG = os.getenv("DEBUG", "false").lower() == "true"
@@ -18,7 +18,7 @@ spec = importlib.util.spec_from_file_location("main", os.path.join(CONTAINER_SCR
 main = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(main)
 
-print("Welcome to Tarzoq's \"subsync-bazarr\", please check out the repository on GitHub if you encounter any issues: https://github.com/Tarzoq/subsync-bazarr\n")
+print("Welcome to Tarzoq's \"subsyncerr\", please check out the repository on GitHub if you encounter any issues: https://github.com/Tarzoq/subsyncerr\n")
 
 time.sleep(1)
 
@@ -100,7 +100,7 @@ def list_metadata(is_movie):
         return False
     
 def bazarr_path():
-    url = f"{main.BAZARR_URL}/api/files?path=%2Fsubsync-bazarr"
+    url = f"{main.BAZARR_URL}/api/files?path=%2Fsubsyncerr"
     
     headers = {
         "X-API-KEY": f"{main.API_KEY}",

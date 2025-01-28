@@ -53,11 +53,11 @@ def run_command(command, sub_file):
             
 def log_output(sub_file, command, output, reason):
     if 'subsync' in command:
-        log_folder = '/subsync-bazarr/logs/subsync'
+        log_folder = '/subsyncerr/logs/subsync'
     elif 'subcleaner' in command:
-        log_folder = '/subsync-bazarr/logs/subcleaner'
+        log_folder = '/subsyncerr/logs/subcleaner'
     else:
-        log_folder = '/subsync-bazarr/logs'
+        log_folder = '/subsyncerr/logs'
         
     timestamp = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
         
@@ -730,9 +730,9 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 print()
                 
 if __name__ == "__main__":
-    csv_file = '/subsync-bazarr/unsynced.csv'
-    retry_file = '/subsync-bazarr/logs/retry.csv'
-    failed_file = '/subsync-bazarr/failed.txt'
+    csv_file = '/subsyncerr/unsynced.csv'
+    retry_file = '/subsyncerr/logs/retry.csv'
+    failed_file = '/subsyncerr/failed.txt'
     
     if not os.path.isfile(csv_file):
         create_csv_file(csv_file)
