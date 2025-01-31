@@ -5,6 +5,7 @@ import ffmpeg
 import subprocess
 import shutil
 import requests
+import pytz
 import stat
 import re
 from datetime import datetime
@@ -16,6 +17,8 @@ BAZARR_URL = os.getenv("BAZARR_URL", "http://localhost:6767")
 SLEEP = os.getenv("SLEEP", "300")
 SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
 WINDOW_SIZE = os.getenv("WINDOW_SIZE", "1800")
+
+TZ = pytz.timezone(os.getenv('TZ', 'UTC'))
 
 def run_command(command, sub_file):
     process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -59,7 +62,7 @@ def log_output(sub_file, command, output, reason):
     else:
         log_folder = '/subsyncerr/logs'
         
-    timestamp = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+    timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H.%M.%S')
         
     os.makedirs(log_folder, exist_ok=True)
     cleaned_sub_file = re.sub(r'[\\/*?:"<>|]', " - ", sub_file)
@@ -168,7 +171,7 @@ def has_error(output, sub_file):
             return 'nosync', 'unknown'
     
 def add_to_failed_list(sub_file):
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')
     data = f"{timestamp}: {sub_file}\n"
 
     try:
@@ -183,7 +186,7 @@ def add_to_failed_list(sub_file):
     
 def add_to_csv_list(csv_file, reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id):
     data = [
-        datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S'),
         reference_file,
         sub_file,
         sub_code2,
@@ -211,7 +214,7 @@ def add_to_csv_list(csv_file, reference_file, sub_file, sub_code2, sub_code3, ep
 
 def add_to_retry_list(retry_file, reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id):
     data = [
-        datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S'),
         reference_file,
         sub_file,
         sub_code2,
@@ -467,7 +470,7 @@ def process_subtitles(csv_file, retry_file):
                 english_sub_path = replace_language_code(subtitle[2], False)
                 english_subtitle = next((sub for sub in r_subtitle if sub[2] == english_sub_path), None)
                 
-                timestamp = datetime.now().strftime('%H:%M:%S')
+                timestamp = datetime.now(TZ).strftime('%H:%M:%S')
                 print(f"[{timestamp}] Processed: {processed_count}, Remaining: {current_count}")
                 time.sleep(0.1)
                 print(f"Processing subtitle: {subtitle[2]}")
@@ -532,7 +535,7 @@ def process_subtitles(csv_file, retry_file):
         time.sleep(1)
         processed_count += 1
         
-        timestamp = datetime.now().strftime('%H:%M:%S')
+        timestamp = datetime.now(TZ).strftime('%H:%M:%S')
         print(f"[{timestamp}] Processed: {processed_count}, Remaining: {current_count}")
         time.sleep(0.1)
 
@@ -576,7 +579,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
             
             if length == "tv":
                 eng_points = 40
-                non_eng_points = 50
+                non_eng_points = 80
             elif length == "short":
                 eng_points = 50
                 non_eng_points = 120
@@ -741,12 +744,12 @@ if __name__ == "__main__":
         create_retry_file(retry_file)
         
     while True:
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')
         print(f"{timestamp}: Checking for subtitles...")
         time.sleep(0.1)
         
         process_subtitles(csv_file, retry_file)
         
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')
         print(f"{timestamp}: List is clear, checking again in {SLEEP} seconds!\n")
         time.sleep(int(SLEEP))

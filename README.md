@@ -16,9 +16,12 @@ Written with some help from Claude 3.5-Sonnet, the best coding AI in the world a
 
 This project could not have come into fruition without these amazing [open-source projects](#credits), written by awesome people.
 
+# Features
+
 ## What Motivated Me To Do This
 After lots of frustration, googling and dabbling with Bazarr and its built-in sync feature, which left me with many out-of-sync subtitles I set out to
 After dabbling with Bazarr, its built-in synchronization feature which revealed itself to be lackluster.
+The project was at first called subaligner-bazarr, which later turned into subsync-bazarr, until I had the excellent idea to name it subsyncarr. Before proceeding I had to make really make sure it was not used, I was taken by surprise that a project by that name had already been taken. For this very reason I decided to name the project ``subsyncerr`` instead.
 
 ## Installation
 1. Download the container from the following Docker-repository: [tarzoq/subsyncerr](https://hub.docker.com/r/tarzoq/subsyncerr)
