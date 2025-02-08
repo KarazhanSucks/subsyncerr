@@ -1,4 +1,5 @@
 import os
+import sys
 import csv
 import time
 import ffmpeg
@@ -11,11 +12,13 @@ import re
 from datetime import datetime
 
 os.environ["PYTHONUNBUFFERED"] = "1"
+stdout_buffer = []
+stdout_capture = True
 
 API_KEY = os.getenv("API_KEY", "None")
 BAZARR_URL = os.getenv("BAZARR_URL", "http://localhost:6767")
-SLEEP = os.getenv("SLEEP", "300")
 SUBCLEANER = os.getenv("SUBCLEANER", "false").lower() == "true"
+SLEEP = os.getenv("SLEEP", "300")
 WINDOW_SIZE = os.getenv("WINDOW_SIZE", "1800")
 
 TZ = pytz.timezone(os.getenv('TZ', 'UTC'))
@@ -438,6 +441,7 @@ def reference_length(reference_file):
     
 def process_subtitles(csv_file, retry_file):
     processed_count = 0 
+    global stdout_capture
     
     while True:
         with open(csv_file, 'r') as file:
@@ -460,6 +464,7 @@ def process_subtitles(csv_file, retry_file):
                 if not r_subtitle:
                     break
                 
+                stdout_capture = False  
                 print()
                              
                 current_count = len(r_subtitle)
@@ -521,7 +526,9 @@ def process_subtitles(csv_file, retry_file):
                 
             if not subtitles:
                 break
-        print()    
+            
+        stdout_capture = False    
+        print()
         
         current_count = len(subtitles)
         
@@ -732,6 +739,21 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                     find_non_english_counterpart(csv_file, subtitle[1:10], False)
                 print()
                 
+class StdoutInterceptor:
+    def __init__(self, original_stdout):
+        self.original_stdout = original_stdout
+
+    def write(self, message):
+        global stdout_capture
+        if stdout_capture and message.strip():
+            stdout_buffer.append(message)
+        self.original_stdout.write(message)
+
+    def flush(self):
+        self.original_stdout.flush()
+
+sys.stdout = StdoutInterceptor(sys.stdout)
+                
 if __name__ == "__main__":
     csv_file = '/subsyncerr/unsynced.csv'
     retry_file = '/subsyncerr/logs/retry.csv'
@@ -742,8 +764,19 @@ if __name__ == "__main__":
         
     if not os.path.isfile(retry_file):
         create_retry_file(retry_file)
-        
+    
     while True:
+        stdout_capture = True
+        
+        if len(stdout_buffer) >= 2 and \
+            "Checking for subtitles" in stdout_buffer[-2] and \
+            "List is clear" in stdout_buffer[-1]:
+            print('\033[2A\033[2K\033[1B\033[2K\033[1A', end='')
+            sys.stdout.flush()
+            stdout_buffer = []
+        
+        time.sleep(0.1) 
+           
         timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')
         print(f"{timestamp}: Checking for subtitles...")
         time.sleep(0.1)
@@ -751,5 +784,7 @@ if __name__ == "__main__":
         process_subtitles(csv_file, retry_file)
         
         timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')
-        print(f"{timestamp}: List is clear, checking again in {SLEEP} seconds!\n")
+        print(f"{timestamp}: List is clear, checking again in {SLEEP} seconds!")
+        if not stdout_capture:
+            print("\n")
         time.sleep(int(SLEEP))
