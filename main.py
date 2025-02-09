@@ -773,8 +773,8 @@ if __name__ == "__main__":
             "List is clear" in stdout_buffer[-1]:
             print('\033[2A\033[2K\033[1B\033[2K\033[1A', end='')
             sys.stdout.flush()
-            stdout_buffer = []
         
+        stdout_buffer = []
         time.sleep(0.1) 
            
         timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')

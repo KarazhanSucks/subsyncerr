@@ -45,7 +45,7 @@ RUN mkdir "/opt/subsync" && cd "/opt/subsync" && \
     pip3 install --no-cache-dir . && \
     mkdir "/opt/subsyncerr" && cd "/opt/subsyncerr" && \
     # subsyncerr
-    git clone https://github.com/Tarzoq/subsyncerr.git . && \
+    git clone https://github.com/Tarzoq/subsyncerr.git . && rm README.md && \
     pip install --no-cache-dir -r requirements.txt && \
     chmod +x /opt/subsyncerr/start.py && \
     mkdir "/opt/srt-lang-detect" && cd "/opt/srt-lang-detect" && \

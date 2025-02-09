@@ -18,7 +18,7 @@ spec = importlib.util.spec_from_file_location("main", os.path.join(CONTAINER_SCR
 main = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(main)
 
-print("Welcome to Tarzoq's \"subsyncerr\", please check out the repository on GitHub if you encounter any issues: https://github.com/Tarzoq/subsyncerr\n")
+print("Welcome to Tarzoq's \"subsyncerr\", please check out the README on GitHub if you encounter any issues: https://github.com/Tarzoq/subsyncerr\n")
 
 time.sleep(1)
 
@@ -30,7 +30,7 @@ print(f"WINDOW_SIZE: {main.WINDOW_SIZE}\n")
 
 time.sleep(1)
 
-print("REMINDER: CPU-pinning for this container is highly recommended, subsync WILL hog all resources it can get!\n")
+print("REMINDER: CPU-pinning for this container is highly recommended, subsync hogs all resources it can get!\n")
 
 def bazarr_status(max_retries=5, delay=10):
     url = f"{main.BAZARR_URL}/api/system/status"
