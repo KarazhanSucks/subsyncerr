@@ -121,17 +121,16 @@ def replace_language_code(file_path, match):
         
         if not os.path.exists(directory):
             raise FileNotFoundError(f"Directory not found: {directory}")
-        all_files = os.listdir(directory)
-        
-        pattern = re.compile(f"^{re.escape(os.path.basename(new_base))}\.([a-z]{{2}})(\.(hi|cc|sdh))?{re.escape(ext)}$")
-        
-        non_english_subs = []
-        for file in all_files:
-            match = pattern.match(file)
-            if match and match.group(1) != 'en':
-                non_english_subs.append(os.path.join(directory, file))
-                
-        return non_english_subs
+        else:
+            pattern = re.compile(f"^{re.escape(os.path.basename(new_base))}\.([a-z]{{2}})(\.(hi|cc|sdh))?{re.escape(ext)}$")
+            
+            non_english_subs = []
+            for file in os.listdir(directory):
+                match = pattern.match(file)
+                if match and match.group(1) != 'en':
+                    non_english_subs.append(os.path.join(directory, file))
+                    
+            return non_english_subs
     
 def extract_filename(sub_file):
     filename = os.path.basename(sub_file)
@@ -154,15 +153,85 @@ def create_retry_file(retry_file):
         writer.writerow(['timestamp', 'episode', 'subtitles', 'subtitle_language_code2', 'subtitle_language_code3', 'episode_language_code3', 'subtitle_id', 'provider', 'series_id', 'episode_id'])
     os.chmod(retry_file, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
 
+def check_logs_frequency(sub_file, log_folder='/subsyncerr/logs/subsync'):
+    sync_failure_count = 0
+    os.makedirs(log_folder, exist_ok=True)
+    cleaned_sub_file = re.sub(r'[\\/*?:"<>|]', " - ", sub_file)
+    
+    for filename in os.listdir(log_folder):
+        if cleaned_sub_file in filename:
+            filepath = os.path.join(log_folder, filename)
+            try:
+                with open(filepath, 'r', encoding='utf-8') as log_file:
+                    content = log_file.read()
+                    if "Error: couldn't synchronize" in content:
+                        sync_failure_count += 1
+            except Exception:
+                continue
+                
+    return sync_failure_count >= 3
+
+def check_logs_done(sub_file, log_folder='/subsyncerr/logs/subsync'):
+    if os.path.exists(failed_file):
+        with open(failed_file, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            file.seek(0)
+            content = file.read()
+        
+            if sub_file in content:
+                cleaned_sub_file = re.sub(r'[\\/*?:"<>|]', " - ", sub_file)
+                
+                base_log, ext_log = os.path.splitext(cleaned_sub_file)
+                new_base_log = re.sub(r'\.([a-z]{2})(\.(hi|cc|sdh))?$', '', base_log)
+                pattern_log = re.compile(f"^{re.escape(new_base_log)}\.([a-z]{{2}})(\.(hi|cc|sdh))?{re.escape(ext_log)}(\.log)?$")
+                
+                base, ext = os.path.splitext(sub_file)
+                new_base = re.sub(r'\.([a-z]{2})(\.(hi|cc|sdh))?$', '', base)
+                pattern = re.compile(f"^{re.escape(new_base)}\.([a-z]{{2}})(\.(hi|cc|sdh))?{re.escape(ext)}$")
+
+                try:
+                    for item in os.listdir(log_folder):
+                        filename = re.sub(r'\b\d{4}-\d{2}-\d{2}[\sT_]\d{2}[\.:-]\d{2}[\.:-]\d{2}(\s?[A-Z]{2,4}|\s?[+-]\d{2,4})?\b', '', item)
+                        if pattern_log.match(filename):
+                            filepath = os.path.join(log_folder, item)
+                            os.remove(filepath)
+                    print("Old log-files and entries in failed.txt for the subtitle were successfully removed!!!")
+                   
+                    i = 0
+                    for i, line in enumerate(lines):
+                        filename = re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}: ', '', lines[i])
+
+                        if pattern.match(filename):
+                            lines.pop(i)
+                            
+                            while i < len(lines) and lines[i].strip():
+                                next_filename = re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}: ', '', lines[i])
+                                if pattern.match(next_filename):
+                                    lines.pop(i)
+                                else:
+                                    break
+                                
+                            while i < len(lines) and not lines[i].strip():
+                                lines.pop(i)
+                        else:
+                            i += 1
+                    with open(failed_file, "w", encoding="utf-8") as file:
+                        file.writelines(lines)
+                except Exception as e:
+                    print(f"\u2022ERROR: {str(e)}")
+
 def has_error(output, sub_file):
     filename = extract_filename(sub_file)
     
     cleaned_output = output.replace(sub_file, '').replace(filename, '')
     
     if "done, saved to" in cleaned_output:
+        check_logs_done(sub_file)
         return None
     else:
         if "couldn't synchronize!" in cleaned_output:
+            if check_logs_frequency(sub_file):
+                return 'nosync', 'toomany'
             if "progress 100%, 0 points" in cleaned_output:
                 return 'nosync'
             return True
@@ -675,6 +744,9 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                     elif has_error(output, sub_file)[1] == 'timeout':
                         print("ERROR: Subsync exceeded Window-Size and set timeout, terminating...")
                         log_output(sub_file, log_command, output, "timeout exceeded")
+                    elif has_error(output, sub_file)[1] == 'toomany':
+                        print("Subtitle has failed too many times...")
+                        log_output(sub_file, log_command, output, "too many fails")
                     elif has_error(output, sub_file)[1] == 'unknown':
                         log_output(sub_file, log_command, output, "unknown error")
                     else:
