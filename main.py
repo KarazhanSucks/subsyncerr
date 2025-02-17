@@ -195,7 +195,6 @@ def check_logs_done(sub_file, log_folder='/subsyncerr/logs/subsync'):
                         if pattern_log.match(filename):
                             filepath = os.path.join(log_folder, item)
                             os.remove(filepath)
-                    print("Old log-files and entries in failed.txt for the subtitle were successfully removed!!!")
                    
                     i = 0
                     for i, line in enumerate(lines):
@@ -745,7 +744,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                         print("ERROR: Subsync exceeded Window-Size and set timeout, terminating...")
                         log_output(sub_file, log_command, output, "timeout exceeded")
                     elif has_error(output, sub_file)[1] == 'toomany':
-                        print("Subtitle has failed too many times...")
+                        print("ERROR: Subtitle has failed too many times...")
                         log_output(sub_file, log_command, output, "too many fails")
                     elif has_error(output, sub_file)[1] == 'unknown':
                         log_output(sub_file, log_command, output, "unknown error")
