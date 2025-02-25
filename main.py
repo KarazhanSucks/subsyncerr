@@ -171,53 +171,61 @@ def check_logs_frequency(sub_file, log_folder='/subsyncerr/logs/subsync'):
                 
     return sync_failure_count >= 3
 
-def check_logs_done(sub_file, log_folder='/subsyncerr/logs/subsync'):
+def remove_from_failed(sub_file):
     if os.path.exists(failed_file):
         with open(failed_file, 'r', encoding='utf-8') as file:
             lines = file.readlines()
-            file.seek(0)
+            
+            base, ext = os.path.splitext(sub_file)
+            new_base = re.sub(r'\.([a-z]{2})(\.(hi|cc|sdh))?$', '', base)
+            pattern = re.compile(f"^{re.escape(new_base)}\.([a-z]{{2}})(\.(hi|cc|sdh))?{re.escape(ext)}$")
+            
+            try:
+                i = 0
+                for i, line in enumerate(lines):
+                    filename = re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}: ', '', lines[i])
+
+                    if pattern.match(filename):
+                        lines.pop(i)
+                        
+                        while i < len(lines) and lines[i].strip():
+                            next_filename = re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}: ', '', lines[i])
+                            if pattern.match(next_filename):
+                                lines.pop(i)
+                            else:
+                                break
+                            
+                        while i < len(lines) and not lines[i].strip():
+                            lines.pop(i)
+                    else:
+                        i += 1
+                with open(failed_file, "w", encoding="utf-8") as file:
+                    file.writelines(lines)
+            except Exception as e:
+                print(f"\u2022ERROR: {str(e)}")
+                
+def check_logs_done(sub_file, log_folder='/subsyncerr/logs/subsync'):
+    if os.path.exists(failed_file):
+        with open(failed_file, 'r', encoding='utf-8') as file:
             content = file.read()
         
-            if sub_file in content:
-                cleaned_sub_file = re.sub(r'[\\/*?:"<>|]', " - ", sub_file)
-                
-                base_log, ext_log = os.path.splitext(cleaned_sub_file)
-                new_base_log = re.sub(r'\.([a-z]{2})(\.(hi|cc|sdh))?$', '', base_log)
-                pattern_log = re.compile(f"^{re.escape(new_base_log)}\.([a-z]{{2}})(\.(hi|cc|sdh))?{re.escape(ext_log)}(\.log)?$")
-                
-                base, ext = os.path.splitext(sub_file)
-                new_base = re.sub(r'\.([a-z]{2})(\.(hi|cc|sdh))?$', '', base)
-                pattern = re.compile(f"^{re.escape(new_base)}\.([a-z]{{2}})(\.(hi|cc|sdh))?{re.escape(ext)}$")
+        if sub_file in content:
+            cleaned_sub_file = re.sub(r'[\\/*?:"<>|]', " - ", sub_file)
+            
+            base, ext = os.path.splitext(cleaned_sub_file)
+            new_base = re.sub(r'\.([a-z]{2})(\.(hi|cc|sdh))?$', '', base)
+            pattern = re.compile(f"^{re.escape(new_base)}\.([a-z]{{2}})(\.(hi|cc|sdh))?{re.escape(ext)}(\.log)?$")
 
-                try:
-                    for item in os.listdir(log_folder):
-                        filename = re.sub(r'\b\d{4}-\d{2}-\d{2}[\sT_]\d{2}[\.:-]\d{2}[\.:-]\d{2}(\s?[A-Z]{2,4}|\s?[+-]\d{2,4})?\b', '', item)
-                        if pattern_log.match(filename):
-                            filepath = os.path.join(log_folder, item)
-                            os.remove(filepath)
-                   
-                    i = 0
-                    for i, line in enumerate(lines):
-                        filename = re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}: ', '', lines[i])
-
-                        if pattern.match(filename):
-                            lines.pop(i)
-                            
-                            while i < len(lines) and lines[i].strip():
-                                next_filename = re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}: ', '', lines[i])
-                                if pattern.match(next_filename):
-                                    lines.pop(i)
-                                else:
-                                    break
-                                
-                            while i < len(lines) and not lines[i].strip():
-                                lines.pop(i)
-                        else:
-                            i += 1
-                    with open(failed_file, "w", encoding="utf-8") as file:
-                        file.writelines(lines)
-                except Exception as e:
-                    print(f"\u2022ERROR: {str(e)}")
+            try:
+                for item in os.listdir(log_folder):
+                    filename = re.sub(r'\b\d{4}-\d{2}-\d{2}[\sT_]\d{2}[\.:-]\d{2}[\.:-]\d{2}(\s?[A-Z]{2,4}|\s?[+-]\d{2,4})?\b', '', item)
+                    if pattern.match(filename):
+                        filepath = os.path.join(log_folder, item)
+                        os.remove(filepath)
+                remove_from_failed(sub_file)
+                
+            except Exception as e:
+                print(f"\u2022ERROR: {str(e)}")
 
 def has_error(output, sub_file):
     filename = extract_filename(sub_file)
@@ -241,9 +249,12 @@ def has_error(output, sub_file):
         else:
             return 'nosync', 'unknown'
     
-def add_to_failed_list(sub_file):
+def add_to_failed_list(sub_file, failed=True):
     timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H:%M:%S')
     data = f"{timestamp}: {sub_file}\n"
+    
+    if failed:
+        remove_from_failed(sub_file)
 
     try:
         if (not os.access(failed_file, os.R_OK)) or (not os.access(failed_file, os.W_OK)):
@@ -376,7 +387,7 @@ def find_non_english_counterpart(csv_file, original_subtitle, move_to_failed):
         reader = csv.reader(file)
         subtitles = list(reader)
                  
-    if move_to_failed == 'doprocess':
+    if move_to_failed == 'redownload':
         non_english_subs = replace_language_code(original_subtitle[2], True)
         if non_english_subs:
             index = 0
@@ -419,7 +430,7 @@ def find_non_english_counterpart(csv_file, original_subtitle, move_to_failed):
                                     output, fail = run_command(subcleaner_command, non_english_sub[2])
                                     log_output(non_english_sub[2], subcleaner_command, output, False)
                             
-                                add_to_failed_list(non_english_sub[2])
+                                add_to_failed_list(non_english_sub[2], False)
                                 time.sleep(0.5)
                             
                                 print(f"Removed \"{non_english_sub[3]}\"-subtitle from list and added it to failed.txt!")
@@ -615,6 +626,7 @@ def process_subtitles(csv_file, retry_file):
         time.sleep(0.1)
 
         if sub_code2 != 'en':
+            
             if english_subtitle:
                 process_subtitle(english_subtitle[8] == "", english_subtitle[1:10], csv_file, None)
             elif english_sub_path:
@@ -642,6 +654,16 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
         remove_from_list(csv_file, sub_id)
         time.sleep(1)
     else:
+        if sub_code2 != 'en':
+            with open(failed_file, 'r', encoding='utf-8') as file:
+                content = file.read()
+                english_sub_path = replace_language_code(sub_file, False)
+                if english_sub_path in content:
+                    print("ERROR: Failed subtitle counterpart in failed.txt detected...")
+                    english_placeholder = [reference_file, english_sub_path, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id]
+                    find_non_english_counterpart(csv_file, english_placeholder, True)
+                    return False
+                
         lang_command = f"/usr/bin/python3 -u /opt/srt-lang-detect/srtlangdetect.py \"{sub_file}\""
         if srt_lang_detect(lang_command, sub_file):
             if SUBCLEANER:
@@ -703,7 +725,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                         log_output(sub_file, log_command, output, "no such file or directory") 
                     elif fail == "error":
                         print("ERROR: The run_command function encoutered an error, adding to failed.txt...")
-                        log_output(sub_file, log_command, output, "The run_command function encountered an error")
+                        log_output(sub_file, log_command, output, "run_command function encountered an error")
             
                     add_to_failed_list(sub_file)
                     remove_from_list(csv_file, sub_id)
@@ -779,7 +801,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                         remove_from_list(csv_file, sub_id)
                         
                         if sub_code2 == 'en':
-                            find_non_english_counterpart(csv_file, subtitle[1:10], 'doprocess')
+                            find_non_english_counterpart(csv_file, subtitle[1:10], 'redownload')
                         print()
                             
                     except Exception as e:
