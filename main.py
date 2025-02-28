@@ -176,33 +176,33 @@ def remove_from_failed(sub_file):
         with open(failed_file, 'r', encoding='utf-8') as file:
             lines = file.readlines()
             
-            base, ext = os.path.splitext(sub_file)
-            new_base = re.sub(r'\.([a-z]{2})(\.(hi|cc|sdh))?$', '', base)
-            pattern = re.compile(f"^{re.escape(new_base)}\.([a-z]{{2}})(\.(hi|cc|sdh))?{re.escape(ext)}$")
-            
-            try:
-                i = 0
-                for i, line in enumerate(lines):
-                    filename = re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}: ', '', lines[i])
+        base, ext = os.path.splitext(sub_file)
+        new_base = re.sub(r'\.([a-z]{2})(\.(hi|cc|sdh))?$', '', base)
+        pattern = re.compile(f"^{re.escape(new_base)}\.([a-z]{{2}})(\.(hi|cc|sdh))?{re.escape(ext)}$")
+        
+        try:
+            i = 0
+            for i, line in enumerate(lines):
+                filename = re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}: ', '', lines[i])
 
-                    if pattern.match(filename):
-                        lines.pop(i)
-                        
-                        while i < len(lines) and lines[i].strip():
-                            next_filename = re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}: ', '', lines[i])
-                            if pattern.match(next_filename):
-                                lines.pop(i)
-                            else:
-                                break
-                            
-                        while i < len(lines) and not lines[i].strip():
+                if pattern.match(filename):
+                    lines.pop(i)
+                    
+                    while i < len(lines) and lines[i].strip():
+                        next_filename = re.sub(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}: ', '', lines[i])
+                        if pattern.match(next_filename):
                             lines.pop(i)
-                    else:
-                        i += 1
-                with open(failed_file, "w", encoding="utf-8") as file:
-                    file.writelines(lines)
-            except Exception as e:
-                print(f"\u2022ERROR: {str(e)}")
+                        else:
+                            break
+                        
+                    while i < len(lines) and not lines[i].strip():
+                        lines.pop(i)
+                else:
+                    i += 1
+            with open(failed_file, "w", encoding="utf-8") as file:
+                file.writelines(lines)
+        except Exception as e:
+            print(f"\u2022ERROR: {str(e)}")
                 
 def check_logs_done(sub_file, log_folder='/subsyncerr/logs/subsync'):
     if os.path.exists(failed_file):
