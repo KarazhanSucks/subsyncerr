@@ -4,34 +4,33 @@
 A containerized automated Bazarr-companion that synchronizes the subtitles downloaded by Bazarr using [sc0ty's subsync](https://github.com/sc0ty/subsync). Conditions are set in place for a successful sync that are quite strict, for in which case they aren't met, the subtitle will be blacklisted in Bazarr and a new subtitle will be downloaded. This will in turn leave you with close to 100% of your subtitles in sync.
 
 ## Features
-* Great turnout for Non-English subtitles, thanks to subsync's ability to sync them to already synced English subtitles, which evidently get more reliable results.
+* Great turnout for non-English subtitles, thanks to ``subsync's`` ability to sync them to already synced English subtitles, which evidently achieve more reliable results.
+* Simple concept, aimed to work as universally as possible, while also keeping the setup process easy to follow.
+* Blacklisting of bad unsyncable subtitles, only leaving successfully synced subtitles.
 * Prerequisites for file permissions and Bazarr API-access before running ``main.py``, to ensure everything works as expected.
-* Downloaded subtitles get added as entries in a CSV-file, making Bazarr work independently from subsyncerr.
-* Separate CSV-file used for bad subtitles requesting blacklist, but Bazarr-API is unaccessable, ensuring that nothing gets swept under the rug.
-* Blacklisting of bad unsyncable subtitles, only leaving subtitles that could sync successfully.
-* Simple setup, aimed to work as universally as possible, while also keeping the setup process as easy to understand.
-* Subtitles that sadly can't be processed reliably by subsync because of either a bad media file, or an unsupported language, will get added as an entry to failed.txt, requiring manual intervention.
-* Logs for subsync and subcleaner, making troubleshooting easier.
-* [Language verification](https://github.com/mdcollins05/srt-lang-detect) on subtitles against language code in filename, which in my experience deemed necessary.
+* Logs stored for ``subsync`` and ``subcleaner``, making troubleshooting easier.
+* Downloaded subtitles get added as entries in a ``CSV``-file, enabling Bazarr to work independently from ``subsyncerr``.
+* Separate ``CSV-file`` used for temporarily storing bad subtitles to blacklist while Bazarr-API is unreachable, ensuring that nothing gets swept under the rug.
+* Although rare, subtitles that can't be synced by ``subsync`` because of either a bad media file or an unsupported language, will get added as an entry in ``failed.txt``, a list for subtitles requiring manual intervention.
+* [Language verification](https://github.com/mdcollins05/srt-lang-detect) on subtitles against language code in filename, which in my experience is deemed necessary.
 * [Subtitle ad-remover](https://github.com/KBlixt/subcleaner) built-in, can be optionally enabled.
 
 This project could not have come into fruition without these amazing [open-source projects](#credits), written by awesome people.
 
 ## Installation
 1. Pull the container from the following Docker-repository: [tarzoq/subsyncerr](https://hub.docker.com/r/tarzoq/subsyncerr)
-2. Create a new folder/share, allocate the folder to both Bazarr and the container using ``/subsyncerr`` as the container path. (This folder willq)
+2. Create a new folder/share, allocate the folder to both Bazarr and the container using ``/subsyncerr`` as the container path.
 3. Allocate the same media paths used by Bazarr to the container.
 4. Add the following [Environment Variables](#environment-variables) along with their corresponding values: ``API_KEY`` & ``BAZARR_URL``
-5. Resource limitations such as CPU-pinning for the container is highly recommended, subsync has no bounds. (I for example have it set to one isolated core)
-6. Check the container's Docker-log, if all prerequisites are passed, the script will commence.
-7. If all is working, the container will have added the ``addtosynclist``-script to your newly created folder, simply add this as a post exectution script in Bazarr: 
-````
-bash /subsyncerr/addtosynclist.bash '{{episode}}' '{{subtitles}}' '{{subtitles_language_code2}}' '{{subtitles_language_code3}}' '{{episode_language_code3}}' '{{subtitle_id}}' '{{provider}}' '{{series_id}}' '{{episode_id}}'
-````
+    * Additionally you can choose to enable subcleaner (KBlixt), by setting the environment variable value "SUBCLEANER" to "True". (Supported languages are: English, Spanish, Portuguese, Dutch, Indonesian and Swedish)
+5. ``CPU-pinning`` for the container is highly recommended, subsync uses all it can get. (I for example have it set to one isolated core)
+6. Check the container's Docker-log, if all prerequisites are passed, ``main.py`` will commence.
+7. The container will now have added all necessary files, including the ``addtosynclist``-script to your newly created folder. Last step, simply add this as a post exectution script in Bazarr: 
+    ````
+    bash /subsyncerr/addtosynclist.bash '{{episode}}' '{{subtitles}}' '{{subtitles_language_code2}}' '{{subtitles_language_code3}}' '{{episode_language_code3}}' '{{subtitle_id}}' '{{provider}}' '{{series_id}}' '{{episode_id}}'
+    ````
 
-* Additionally you can choose to enable subcleaner (KBlixt), by setting the environment variable value "SUBCLEANER" to "True". (Supported languages are: English, Spanish, Portuguese, Dutch, Indonesian and Swedish)
-
-## Docker-Compose
+### Docker-Compose
 ````
 version: "3.8"
 services:
@@ -44,6 +43,7 @@ services:
     environment:
         API_KEY: None
         BAZARR_URL: http://localhost:6767
+        SUBCLEANER: True # Optional, False by default
         TZ: Europe/Berlin
     cpuset: "5"
     restart: unless-stopped
@@ -52,25 +52,36 @@ services:
 ## Environment Variables
 | Variable | Required | Description | Default value |
 | --- | --- | --- | --- |
-| ``API_KEY`` | Yes | API key for Bazarr, required to blacklist and request new subtitles in case subtitle fails to sync properly | ``None`` |
-| ``BAZARR_URL`` | Yes | IP address or hostname for Bazarr | ``http:localhost:6767`` |
-| ``SUBCLEANER`` | No | True or False for if you want to enable subcleaner for the subtitles | ``False`` |
-| ``SLEEP`` | No | Time interval between check list if it is empty, insert a number | ``300 (seconds)`` |
-| ``WINDOW_SIZE`` | No | maximum amount of time spent synchronizing subtitle, lower this if subtitles take too long to finish | ``1800 (seconds)`` |
+| ``API_KEY`` | Yes | API key for Bazarr, required to blacklist and request new subtitles in case subtitles fail to synchronize. | ``None`` |
+| ``BAZARR_URL`` | Yes | IP address/hostname and port for Bazarr. | ``http:localhost:6767`` |
+| ``SUBCLEANER`` | No | True or False for if you want to enable ``subcleaner`` when processing subtitles. | ``False`` |
+| ``SLEEP`` | No | Time interval for how often to check ``unsynced.csv`` for new entries when it is empty. | ``300 (seconds)`` |
+| ``WINDOW_SIZE`` | No | Maximum window of time for ``subsync`` to spend synchronizing subtitles, lower this if you think subtitles take too long to finish (wouldn't recommend for most people). | ``1800 (seconds)`` |
 
 ## What Motivated Me To Do This
-After months of frustration, googling and dabbling with Bazarr and its built-in sync feature, which left me with many out-of-sync subtitles, I set out to
+It all started when I got into using Plex along with the *arrs, but more specifically, Bazarr. It was not unusual for me to sit down to watch something, only for the subtitles to be completely out-of-sync. If you're anything like me, you'd rather have no subtitles than subtitles that are so out-of-sync they need to be manually disabled.
+
+With other people using my server, I recognized the significance to this issue. The feeling of unreliability when pressing play, anxiously hoping the subtitle would be in sync, fueled my frustration, forcing me to set out for a solution.
+
+My first quest started by dabbling with Bazarr and its built-in sync feature (``ffsubsync``). At first I felt hope in thinking I had found the solution. However, as someone with English as their second-language, it quickly revealed that the results for non-English subtitles were quite futile.
+
+This expanded my search to Reddit, GitHub
+
+Which left me with many out-of-sync subtitles, I set out to
 After dabbling with Bazarr, its built-in synchronization feature which revealed itself to be lackluster.
-The project was at first called subaligner-bazarr, which later turned into subsync-bazarr, until I had the excellent idea to name it subsyncarr. Before proceeding I had to make really make sure it was not used, I was taken by surprise that a project by that name had already been taken. For this very reason I decided to name the project ``subsyncerr`` instead. I thought the ultimate way of things was not needing to worry about subtitles, just letting Plex auto-select your preferred language, and them being in sync.
+
+My main goal was to come up with a solution for out-of-sync non-English subtitles.
+
+
+
+The project was at first called subaligner-bazarr, which later turned into subsync-bazarr, until I had the excellent idea to name it subsyncarr. Before proceeding I had to make really make sure it was available, and I was taken by surprise that a project by that name had already been taken. For this very reason I decided to name the project ``subsyncerr`` instead. I thought the ultimate way of things was not needing to worry about subtitles, just letting Plex auto-select your preferred language, and them being in sync.
 
 ## Usage 
 Whenever a subtitle gets added to ``failed.txt``, what I do is double-check to see if the subtitles are correct. In case the English subtitle is in sync and not requiring a manual sync, the non-English subtitles can simply be redownloaded in Bazarr, which will make them sync to the English subtitle.
 
-Written with some help from Claude 3.5-Sonnet, the best coding AI in the world at the time. Although it has come to a point where the AI is more just a tool where I mostly still need to rely on the basic programming skills I possess.
-
 Other subtitle synchronizers tested only gave reliable results on English subtitles, and were impossible to interpret when synchroni
 
-If you're anything like me, you'd rather have no subtitles than subtitles that are so out of sync they need to be manually disabled. This is the goal with this project.
+
 
 ## How It Works
 
@@ -130,13 +141,15 @@ Please note that certain languages like Korean, Japanese and Chinese media files
 ## Disclaimer
 A big reason I didn't feel comfortable deeming this project ready for regular use is because if big necessary changes happen to the code, it would take you to redownload all the subtitles to make use of the update.
 
-Have you ever felt anxious about sitting down with family or friends, about to watch a newly added movie, but having no comfort in knowing if the subtitles are going to be in sync? Then you have come to the right place! I used to feel the exact same way. The available options at the time, like the built-in ffsubsync in Bazarr, was very hit or miss, and being from a different country, Non-English subtitles were even worse.
+Have you ever felt anxious about sitting down with family or friends, about to watch a newly added movie, but having no comfort in knowing if the subtitles are going to be in sync? Then you have come to the right place! I used to feel the exact same way. The available options at the time, like the built-in ffsubsync in Bazarr, was very hit or miss, and being from a different country, non-English subtitles were even worse.
 
 ## Inspirations
 * [SubSyncStarter (drikqlis)](https://github.com/drikqlis/SubSyncStarter), inspired the act of blacklisting subtitles.
 * [Concept, Reddit-user:](https://www.reddit.com/r/bazarr/comments/106sbub/comment/juszb2v/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button) ``pasm99``
 
 ## Credits
-* [subsync (sc0ty)](https://github.com/sc0ty/subsync), for syncing the subtitles to audio and other subtitles for Non-English.
+Written with some help from Claude 3.5-Sonnet, the best coding AI in the world at the time. Although it has come to a point where the AI is more just a tool where I mostly still need to rely on the basic programming skills I possess.
+
+* [subsync (sc0ty)](https://github.com/sc0ty/subsync), for syncing the subtitles to audio and other subtitles for non-English.
 * [subcleaner (KBlixt)](https://github.com/KBlixt/subcleaner), for removing advertisements in subtitles.
 * [srt-lang-detect (mdcollins05)](https://github.com/mdcollins05/srt-lang-detect), for verifying language in subtitle to language code in the filename.
