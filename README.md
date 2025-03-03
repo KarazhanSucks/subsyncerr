@@ -7,14 +7,14 @@ A containerized automated Bazarr-companion that synchronizes the subtitles downl
 This project could not have come into fruition without these amazing [open-source projects](#credits), written by awesome people.
 
 ## Features
-* Great turnout for non-English subtitles, thanks to ``subsync's`` ability to sync them to already synced English subtitles, which evidently achieve better results.
+* Great results for non-English subtitles, thanks to ``subsync's`` ability to sync them to already synced English subtitles, which evidently achieve better results.
 * Simple concept, aimed to work as universally as possible, while also keeping the setup process easy to follow.
-* Downloaded subtitles get added as entries in a ``CSV``-file, enabling Bazarr to work independently from ``subsyncerr``.
+* Downloaded subtitles are saved as entries in a ``CSV``-file, enabling Bazarr to work independently from ``subsyncerr``.
 * Separate ``CSV-file`` used for temporarily storing bad subtitles to blacklist while Bazarr-API is unreachable, ensuring that nothing gets swept under the rug.
-* Blacklisting of bad unsyncable subtitles, only leaving successfully synced subtitles.
-* Prerequisites for file permissions and Bazarr-API access before running ``main.py``, to ensure everything works as expected.
-* Logs stored for ``subsync`` and ``subcleaner``, making troubleshooting easier.
-* Although rare, subtitles that can't be synced by ``subsync``, because of either a bad media file or an unsupported language, will get added as an entry in ``failed.txt``, a list for subtitles requiring manual intervention.
+* Blacklisting of bad unsyncable subtitles, leaving only successfully synced subtitles.
+* Prerequisites for file permissions, Bazarr-API access, and other requirements before running ``main.py`` to ensure everything functions correctly.
+* Logs are saved for both ``subsync`` and ``subcleaner``, making troubleshooting easier.
+* Although uncommon, subtitles that can not be synchronized by ``subsync``, due to either a bad media file or an unsupported language saved in ``failed.txt``, which is a list for subtitles needing manual adjustment.
 * [Language verification](https://github.com/mdcollins05/srt-lang-detect) on subtitles against language code in filename, in which case it detects another language, it will get blacklisted and a new subtitle will be requested. This has in my experience proven to be necessary.
 * [Subtitle ad-remover](https://github.com/KBlixt/subcleaner) built-in, can be optionally enabled.
 
@@ -66,12 +66,12 @@ services:
 ### What To Do With Subtitles In ``failed.txt``
 Whenever a subtitle gets added to ``failed.txt``, it's because the error outputted by ``subsync`` depicts that it couldn't process the media file properly. Based on my testing, if you look further down the page [``here``](#subsync), you can find the different triggers I have implemented.
 
-How do I proceed? To put it simply, either get another media file, which can in many cases fare better, or, sync it manually. 
+How should I proceed? To put it simply, either get another media file, which can in many cases fare better, or, sync it manually. 
 
-My approach is this:
+My approach is as follows:
 1. Double-check to see if the subtitles are correct. 
-    * In case the English subtitle is in sync, thus not requiring manual synchronization, the non-English subtitles can simply be redownloaded in Bazarr, which will make them synchronize to the "in sync" English subtitle.
-2. If you're out of luck, both the English subtitle is out-of-sync, and you can't get your hands on another media file, your only option is unfortunately to sync it yourself.
+    * In cases where the English subtitle is in sync, thus not requiring manual synchronization, the non-English subtitles can be easily re-downloaded in Bazarr, which will make them synchronize to the "in sync" English subtitle.
+2. If you're out of luck, both the English subtitle is out-of-sync, and you can't get your hands on another media file, your only option left is unfortunately to sync it manually.
 * Once done, remove it from ``failed.txt``. 
 
 If you're curious, this project will always attempt to sync the English subtitle first, in which case it gets added to ``failed.txt``, all the non-English subtitles will first, if enabled, be processed by ``subcleaner``, and then they also get added to ``failed.txt``.
@@ -155,7 +155,7 @@ What I envisioned to be the ultimate way of viewing subtitles in Plex was a lot 
 
 ## Inspirations
 * [``SubSyncStarter``](https://github.com/drikqlis/SubSyncStarter) by ``drikqlis``, inspired the idea to utlize Bazarr's API to blacklist subtitles that receive an error in ``subsync``.
-* [``Concept``](https://www.reddit.com/r/bazarr/comments/106sbub/comment/juszb2v/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button) by Reddit-user: ``pasm99``, displayed a simple but that no subtitles will be missed, not having to rely on both containers being up and running.
+* [``Concept``](https://www.reddit.com/r/bazarr/comments/106sbub/comment/juszb2v/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button) by Reddit-user: ``pasm99``, displayed a simple but effective method of storing Bazarr's downloaded subtitles in a list inside of a file, this way Bazarr and the container can work independently without any downloaded subtitles being be missed.
 
 ## Credits
 Written with a little help from Claude 3.5-Sonnet, one of the best coding AIs in the world at this time. The Al has only been used as a tool, as it hasn't been able to reliably change code without supervision.
