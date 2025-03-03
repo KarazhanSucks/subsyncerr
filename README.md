@@ -30,6 +30,7 @@ This project could not have come into fruition without these amazing [open-sourc
     ````
     bash /subsyncerr/addtosynclist.bash '{{episode}}' '{{subtitles}}' '{{subtitles_language_code2}}' '{{subtitles_language_code3}}' '{{episode_language_code3}}' '{{subtitle_id}}' '{{provider}}' '{{series_id}}' '{{episode_id}}'
     ````
+* One more thing, make sure Bazarr is using two-letter language codes in the filename (this is on by default). Hearing-impaired subtitles with ``hi``, ``cc`` or ``sdh`` in the filename will work fine. But if ``forced`` is added, it won't work, but those most likely won't work well with ``subsync`` either way.
 
 ### Docker-Compose
 ````
@@ -58,8 +59,6 @@ services:
 | ``SUBCLEANER`` | No | True or False for if you want to enable ``subcleaner`` when processing subtitles. | ``False`` |
 | ``SLEEP`` | No | Time interval for how often to check ``unsynced.csv`` for new entries when it is empty. | ``300 (seconds)`` |
 | ``WINDOW_SIZE`` | No | Maximum window of time for ``subsync`` to spend synchronizing subtitles, lower this if you think subtitles take too long to finish (wouldn't recommend for most people). | ``1800 (seconds)`` |
-
-
 
 ## Usage
 ``Subsyncerr`` aims to be as self-reliant as possible. It's merely a companion, so subtitles are all still controlled as per usual through Bazarr. The only thing you need to be aware about is this projects approach to save ``subsync's`` "unprocessable" subtitles from being blacklisted, which is to add them to a list called ``failed.txt``.
