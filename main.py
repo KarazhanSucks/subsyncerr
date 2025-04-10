@@ -626,8 +626,6 @@ def process_subtitles(csv_file, retry_file):
         time.sleep(0.1)
 
         if sub_code2 != 'en':
-            print(f"Processing non-English subtitle: {sub_file}") 
-            time.sleep(0.1)
             if english_subtitle:
                 process_subtitle(english_subtitle[8] == "", english_subtitle[1:10], csv_file, None)
             elif english_sub_path:
@@ -636,8 +634,6 @@ def process_subtitles(csv_file, retry_file):
                 print("No English subtitle found. Processing with subsync...")
                 process_subtitle(is_movie, subtitle[1:10], csv_file, None)
         else:
-            print(f"Processing subtitle: {sub_file}")
-            time.sleep(0.1)
             process_subtitle(is_movie, subtitle[1:10], csv_file, None)
 
         time.sleep(0.1)
@@ -645,6 +641,12 @@ def process_subtitles(csv_file, retry_file):
 def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
     subtitle = [None] + subtitle
     _, reference_file, sub_file, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id = subtitle
+    
+    if sub_code2 != 'en':
+        print(f"Processing non-English subtitle: {sub_file}") 
+    else:
+        print(f"Processing subtitle: {sub_file}")    
+    time.sleep(0.1)
     
     if not os.path.isfile(sub_file):
         print("Subtitle not found in path, removing from list!\n")

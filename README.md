@@ -18,6 +18,10 @@ This project could not have come into fruition without these amazing [open-sourc
 * [Language verification](https://github.com/mdcollins05/srt-lang-detect) on subtitles against language code in filename, in which case it detects another language, it will get blacklisted and a new subtitle will be requested. This has in my experience proven to be necessary.
 * [Subtitle ad-remover](https://github.com/KBlixt/subcleaner) built-in, can be optionally enabled.
 
+## Disclaimer
+* If you want your entire library processed, because of the subtitle metadata required for fundamental functions in the script to work properly you have to redownload all your subtitles. Example of these functions are blacklisting and downloading requests to Bazarr's API.
+* Some subtitles will inevitably pass through the strict sync requirements, which means that some out-of-sync subtitles processed will still be recognized as successful. This is sadly a limitation with ``subsync``. However rare, from what I've observed, most these out-of-sync subtitles are on TV-shows, more specifically parts before intros, on recaps, or in outros.
+
 ## Installation
 1. Pull the container from the following Docker-repository: [tarzoq/subsyncerr](https://hub.docker.com/r/tarzoq/subsyncerr)
 2. Create a new folder/share, allocate the folder to both Bazarr and the container using ``/subsyncerr`` as the container path.
@@ -158,7 +162,7 @@ What I envisioned to be the ultimate way of viewing subtitles in Plex was a lot 
 * [``Concept``](https://www.reddit.com/r/bazarr/comments/106sbub/comment/juszb2v/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button) by Reddit-user: ``pasm99``, displayed a simple but effective method of storing Bazarr's downloaded subtitles in a list inside of a file, this way Bazarr and the container can work independently without any downloaded subtitles being be missed.
 
 ## Credits
-Written with a little help from Claude 3.5-Sonnet, one of the best coding AIs in the world at this time. The Al has only been used as a tool, as it hasn't been able to reliably change code without supervision.
+Written with a little help from Claude 3.5-Sonnet, one of the current best AIs in the world for coding. The Al has only been used as a tool, as it hasn't been able to reliably write code without supervision.
 
 * [subsync (sc0ty)](https://github.com/sc0ty/subsync), for synchronizing the subtitles to both audio and other subtitles.
 * [subcleaner (KBlixt)](https://github.com/KBlixt/subcleaner), for removing advertisements in subtitles.
