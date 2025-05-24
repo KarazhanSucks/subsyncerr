@@ -513,6 +513,8 @@ def reference_length(reference_file):
     
     if duration > 1800:
         if duration > 4320:
+            if duration > 9000:
+                return "xxl"
             return "movie"
         return "short"
     else:
@@ -657,7 +659,7 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
             with open(failed_file, 'r', encoding='utf-8') as file:
                 content = file.read()
                 english_sub_path = replace_language_code(sub_file, False)
-                if english_sub_path in content:
+                if english_sub_path is not None and english_sub_path in content:
                     print("ERROR: Failed subtitle counterpart in failed.txt detected...")
                     english_placeholder = [reference_file, english_sub_path, sub_code2, sub_code3, ep_code3, sub_id, provider, series_id, episode_id]
                     find_non_english_counterpart(csv_file, english_placeholder, True)
@@ -679,9 +681,12 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
             elif length == "short":
                 eng_points = 50
                 non_eng_points = 120
-            else: #movie
+            elif length == "movie":
                 eng_points = 60
                 non_eng_points = 160
+            else: #xxl
+                eng_points = 100
+                non_eng_points = 220
             
             if not english_sub_path:
                 print("Running subsync...")
