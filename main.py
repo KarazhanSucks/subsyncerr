@@ -68,8 +68,9 @@ def log_output(sub_file, command, output, reason):
     timestamp = datetime.now(TZ).strftime('%Y-%m-%d %H.%M.%S')
         
     os.makedirs(log_folder, exist_ok=True)
-    cleaned_sub_file = re.sub(r'[\\/*?:"<>|]', " - ", sub_file)
-    filename = f"{timestamp}{cleaned_sub_file}.log"
+    # cleaned_sub_file = re.sub(r'[\\/*?:"<>|]', " - ", sub_file)
+    # filename = f"{timestamp}{cleaned_sub_file}.log"
+    filename = f"{timestamp}.log"
     log_path = os.path.join(log_folder, filename)
     
     with open(log_path, 'w', encoding="utf-8") as log_file:
