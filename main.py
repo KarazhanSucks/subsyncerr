@@ -862,6 +862,9 @@ if __name__ == "__main__":
     if not os.path.isfile(retry_file):
         create_retry_file(retry_file)
     
+    if not os.path.isfile(failed_file):
+        open(failed_file, 'a').close()
+    
     while True:
         stdout_capture = True
         
