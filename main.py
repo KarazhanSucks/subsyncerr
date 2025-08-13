@@ -677,17 +677,17 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
             length = reference_length(reference_file)
             
             if length == "tv":
-                eng_points = 40
-                non_eng_points = 80
+                eng_points = 25
+                non_eng_points = 12
             elif length == "short":
-                eng_points = 50
-                non_eng_points = 120
+                eng_points = 25
+                non_eng_points = 12
             elif length == "movie":
-                eng_points = 60
-                non_eng_points = 160
+                eng_points = 30
+                non_eng_points = 15
             else: #xxl
-                eng_points = 100
-                non_eng_points = 220
+                eng_points = 30
+                non_eng_points = 15
             
             if not english_sub_path:
                 print("Running subsync...")
