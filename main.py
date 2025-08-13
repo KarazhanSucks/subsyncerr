@@ -690,18 +690,21 @@ def process_subtitle(is_movie, subtitle, csv_file, english_sub_path):
                 non_eng_points = 15
             
             if not english_sub_path:
+
+                min_points = non_eng_points if sub_code2 != 'en' else eng_points
+
                 print("Running subsync...")
     
-                subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(eng_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --out \"/dev/shm/tmp.srt\" --overwrite"
-                log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(eng_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --out \"{sub_file}\" --overwrite"
+                subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(min_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --out \"/dev/shm/tmp.srt\" --overwrite"
+                log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(min_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --out \"{sub_file}\" --overwrite"
                 output, fail = run_command(subsync_command, sub_file)
             
                 if fail == True:
                     print(f"Audio track language unknown, trying again with \"{ep_code3}\" as reference language...")
                     time.sleep(0.1)
                         
-                    subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(eng_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"/dev/shm/tmp.srt\" --overwrite"
-                    log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(eng_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"{sub_file}\" --overwrite"
+                    subsync_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(min_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"/dev/shm/tmp.srt\" --overwrite"
+                    log_command = f"/usr/bin/python3 -u /usr/local/bin/subsync --cli --window-size \"{int(WINDOW_SIZE)}\" --min-points-no \"{int(min_points)}\" --max-point-dist \"1\" --effort \"1\" sync --sub \"{sub_file}\" --sub-lang \"{sub_code3}\" --ref \"{reference_file}\" --ref-stream-by-type \"audio\" --ref-lang \"{ep_code3}\" --out \"{sub_file}\" --overwrite"
                     output, fail = run_command(subsync_command, sub_file)
                 elif fail is not None:
                     if fail == "extension":
